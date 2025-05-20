@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Resumen del envío</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    .ok { color: green; }
+    .fail { color: red; }
+  </style>
+</head>
+<body>
+  <h1>📨 Resumen de mensajes</h1>
+  <p id="resumen">Esperando resultados...</p>
+  <ul id="lista"></ul>
+
+  <script>
+   window.addEventListener('DOMContentLoaded', () => {
+  const resumen = document.getElementById('resumen');
+  const lista = document.getElementById('lista');
+
+  const stored = sessionStorage.getItem('mensajeResumen');
+  if (!stored) {
+    resumen.innerText = '❗ No se encontraron resultados de envío.';
+    return;
+  }
+
+  const { enviados, fallidos } = JSON.parse(stored);
+
+  resumen.innerText = `✅ Enviados: ${enviados.length} | ❌ Fallidos: ${fallidos.length}`;
+
+  if (enviados.length > 0) {
+    const li = document.createElement('li');
+    li.className = 'ok';
+    li.innerText = '✅ Correctos: ' + enviados.join(', ');
+    lista.appendChild(li);
+  }
+
+  if (fallidos.length > 0) {
+    const li = document.createElement('li');
+    li.className = 'fail';
+    li.innerText = '❌ Fallidos: ' + fallidos.join(', ');
+    lista.appendChild(li);
+  }
+});
+
+  </script>
+</body>
+</html>

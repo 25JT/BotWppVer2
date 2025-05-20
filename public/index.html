@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QR WhatsApp Bot</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    #qr {
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Escanea este QR para conectar tu WhatsApp</h1>
+  <img id="qr" src="" alt="QR Code" width="300" />
+  <button onclick="window.location.href='/gracias.html'">Ver resumen</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+  const socket = io();
+  const qrImage = document.getElementById('qr');
+
+  // Avisar al backend que estamos listos
+  socket.emit('ready');
+
+  socket.on('qr', data => {
+    qrImage.src = data;
+  });
+
+socket.on('done', (results) => {
+  // Guardar los resultados en sessionStorage
+  sessionStorage.setItem('mensajeResumen', JSON.stringify(results));
+  // Redirigir
+  window.location.href = '/gracias.html';
+});
+
+
+  </script>
+</body>
+</html>
