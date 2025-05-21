@@ -1,2 +1,12 @@
+Descripcion de proyecto:
+Desarrollo de un nuevo bot que permite enviar mensajes a muchos numeros sin tenerlos agregados como contacto con una pagina web Funcionalidad basica: 
+El usuario se registra, ingresa, escribe los numeros a enviar, escribe el  mensaje, indica continuar , scanea el qr 
+ y el envio se hace automatico, cuando todo esta realizado la pagina muesta un gracias 
+ y muestra los resultados del envio, los cuales tambien pueden ser comprobados por el usuario con su app.
+
+
 se instala npm install baileys
 se instala npm install qrcode-terminal
+
+
+    

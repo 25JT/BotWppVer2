@@ -13,15 +13,17 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import session from 'express-session';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const numerosEnviar = ['573165491376', '571111111111', '573014414701'];
+const numerosEnviar = ['573165491376', '571111111111', '573014414701','57515215','155521234258'];
 const mensaje = 'Hola desde el bot después del login ✅';
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -80,8 +82,18 @@ const startSock = async () => {
       const fallidos = [];
 
       for (const numero of numerosEnviar) {
+        const jid = `${numero}@s.whatsapp.net`;
+
         try {
-          await sock.sendMessage(`${numero}@s.whatsapp.net`, { text: mensaje });
+          const [result] = await sock.onWhatsApp(numero);
+
+          if (!result?.exists) {
+            console.warn(`⚠️ El número ${numero} NO está registrado en WhatsApp`);
+            fallidos.push({ numero, error: 'No existe en WhatsApp' });
+            continue; // Saltar al siguiente número
+          }
+
+          await sock.sendMessage(jid, { text: mensaje });
           console.log(`📩 Mensaje enviado a ${numero}`);
           enviados.push(numero);
         } catch (err) {
@@ -89,6 +101,7 @@ const startSock = async () => {
           fallidos.push({ numero, error: err.message });
         }
       }
+
 
       // Emitir resultados a todos los clientes conectados
       for (const [id, socket] of io.of('/').sockets) {
@@ -124,7 +137,7 @@ const startSock = async () => {
 
 startSock();
 
-const PORT = 3000;
+const PORT = 3001;
 server.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });

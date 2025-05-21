@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR WhatsApp Bot</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    #qr {
+      margin-top: 2rem;
+    }
+
+    .spinner {
+      border: 4px solid #ccc;
+      border-top: 4px solid #0b9;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Escanea este QR para conectar tu WhatsApp</h1>
+  <img id="qr" src="" alt="QR Code" width="300" />
+
+  <p id="estado" style="margin-top: 2rem; font-weight: bold;">Esperando conexión con WhatsApp...</p>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const qrImage = document.getElementById('qr');
+    const estado = document.getElementById('estado');
+
+    // Avisar al backend que estamos listos
+    socket.emit('ready');
+
+    socket.on('qr', data => {
+      qrImage.src = data;
+      estado.innerText = 'Escanea el código QR con tu WhatsApp 📱';
+    });
+
+    socket.on('done', (results) => {
+      estado.innerHTML = '📤 Enviando mensajes... por favor espera... <span class="spinner"></span>';
+      console.log(results);
+
+      sessionStorage.setItem('mensajeResumen', JSON.stringify(results));
+      // Redirigir
+      setTimeout(() => {
+        window.location.href = '/gracias.html';
+      }, 2000);
+      
+    });
+
+
+  </script>
+</body>
+
+</html>

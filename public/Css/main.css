@@ -1,0 +1,191 @@
+html {
+    scroll-behavior: auto !important;
+}
+
+.raleway {
+    font-family: "Raleway", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-style: normal;
+}
+
+.fascinate-inline-regular {
+    font-family: "Fascinate Inline", system-ui;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.enriqueta-regular {
+    font-family: "Enriqueta", serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.enriqueta-medium {
+    font-family: "Enriqueta", serif;
+    font-weight: 500;
+    font-style: normal;
+}
+
+.enriqueta-semibold {
+    font-family: "Enriqueta", serif;
+    font-weight: 600;
+    font-style: normal;
+}
+
+.enriqueta-bold {
+    font-family: "Enriqueta", serif;
+    font-weight: 700;
+    font-style: normal;
+}
+
+/*Final letras */
+
+h1 {
+
+    font-family: "Raleway", sans-serif;
+    font-weight: bold !important;
+
+}
+
+h2 {
+
+    font-family: "Raleway", sans-serif;
+    font-weight: bold !important;
+    text-transform: uppercase;
+}
+
+h3 {
+    font-family: "Enriqueta", serif;
+}
+
+
+
+.containerNav {
+    background: #D2FDFF;
+    background: linear-gradient(180deg, rgba(210, 253, 255, 1) 0%, rgba(95, 232, 255, 1) 100%);
+    display: flex;
+    opacity: 0;
+    border-radius: 8px;
+    box-shadow: 0px 15px 8px #c3c3c3,
+        0px -15px 8px #fdfdfd;
+
+    transform: translateY(-20%);
+}
+
+.marcaName {
+    font-family: "Fascinate Inline", system-ui;
+    width: 99%;
+    font-size: 9rem;
+}
+
+.submarca {
+    transform: translateY(20%);
+    opacity: 0;
+}
+
+.btnmarca {
+    transform: translateY(30%);
+    opacity: 0;
+}
+
+.btn {
+
+
+    font-size: 1.2rem !important;
+    font-family: "Enriqueta", serif;
+    text-transform: uppercase;
+    border-radius: 24px;
+    font-weight: bold !important;
+    border: solid #ffffff 3px !important;
+    display: inline-block;
+
+    background-color: #1AEFAF !important;
+    box-shadow: 0px 15px 8px #c3c3c3,
+        0px -15px 8px #fdfdfd;
+    cursor: pointer;
+    transition: background-color 0.5s ease;
+    transition: transform 0.6s ease;
+}
+
+.btn:hover {
+    background-color: #FF4D5F !important;
+    color: white !important;
+    transform: scale(1.1);
+}
+
+img {
+    width: 60%;
+    height: auto;
+
+}
+
+.img1 {
+    opacity: 1;
+    transform: translateY(-50%);
+    z-index: -9999;
+    animation: pulso 2s ease-in-out infinite;
+}
+
+/*contenedor pag Principal*/
+.contenedor {
+    opacity: 0;
+    background-color: aqua;
+    margin-left: 10%;
+    margin-right: 10%;
+    height: 500px;
+    border-radius: 16px;
+    border: solid 2px black;
+    background-color: #5FE8FF;
+    /* background: linear-gradient(180deg, rgba(210, 253, 255, 1) 0%, rgba(95, 232, 255, 1) 100%); */
+        box-shadow: 0px 15px 8px #c3c3c3,
+        0px -15px 8px #fdfdfd;
+         transform: translateY(-20%);
+}
+
+
+@media (max-width: 1200px) {
+    img {
+        width: 80%;
+        height: auto;
+    }
+}
+
+@media (max-width: 748px) {
+    img {
+        width: 90%;
+        height: auto;
+    }
+}
+
+@media (max-width: 568px) {
+
+    .marcaName {
+        font-size: 2.5rem !important;
+    }
+
+    h2 {
+        font-size: medium !important;
+    }
+
+    h3 {
+        font-size: medium !important;
+    }
+
+    .marcatxt {
+        display: none;
+    }
+
+    .marcaName {
+        font-size: 4rem;
+    }
+
+    .imagen2 {
+        display: none;
+    }
+
+    .btn {
+        font-size: 1rem !important;
+    }
+
+}
