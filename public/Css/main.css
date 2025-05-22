@@ -89,7 +89,7 @@ h3 {
     opacity: 0;
 }
 
-.btn {
+button {
 
 
     font-size: 1.2rem !important;
@@ -108,7 +108,7 @@ h3 {
     transition: transform 0.6s ease;
 }
 
-.btn:hover {
+button:hover {
     background-color: #FF4D5F !important;
     color: white !important;
     transform: scale(1.1);
@@ -184,7 +184,7 @@ img {
         display: none;
     }
 
-    .btn {
+    button {
         font-size: 1rem !important;
     }
 

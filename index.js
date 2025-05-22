@@ -23,8 +23,43 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const numerosEnviar = ['573165491376', '571111111111', '573014414701','57515215','155521234258'];
-const mensaje = 'Hola desde el bot después del login ✅';
+
+
+app.use(express.json()); // ✅ Necesario para leer JSON en req.body
+
+let numerosenv = null;
+let msj = null;
+
+app.post('/validar/datos', (req, res) => {
+  const { numeros, mensaje } = req.body;
+  //console.log('Números:', numeros);
+  //console.log('Mensaje:', mensaje);
+
+  numerosenv = numeros;
+  msj = mensaje;
+
+
+
+
+
+  res.json
+    ({ status: 'ok', recibidos: numeros.length });
+});
+
+const numerosEnviar = numerosenv
+const mensaje = msj
+
+
+// function hacerAlgoConLosDatos() {
+//   if (numerosEnviar && mensaje) {
+//     // ya están definidos
+//     console.log('Enviar mensaje a:', numerosEnviar, 'con el mensaje:', mensaje);
+//   } else {
+//     console.log('Datos no disponibles aún');
+//   }
+// }
+
+
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -78,11 +113,16 @@ const startSock = async () => {
     if (connection === 'open') {
       console.log('✅ Conectado a WhatsApp');
 
+      if (!numerosenv || !msj) {
+        console.warn('⚠️ No hay datos para enviar aún');
+        return;
+      }
+
       const enviados = [];
       const fallidos = [];
 
-      for (const numero of numerosEnviar) {
-        const jid = `${numero}@s.whatsapp.net`;
+      for (const numero of numerosenv) {
+        const jid = `57${numero}@s.whatsapp.net`;
 
         try {
           const [result] = await sock.onWhatsApp(numero);
@@ -90,10 +130,10 @@ const startSock = async () => {
           if (!result?.exists) {
             console.warn(`⚠️ El número ${numero} NO está registrado en WhatsApp`);
             fallidos.push({ numero, error: 'No existe en WhatsApp' });
-            continue; // Saltar al siguiente número
+            continue;
           }
 
-          await sock.sendMessage(jid, { text: mensaje });
+          await sock.sendMessage(jid, { text: msj });
           console.log(`📩 Mensaje enviado a ${numero}`);
           enviados.push(numero);
         } catch (err) {
@@ -103,7 +143,7 @@ const startSock = async () => {
       }
 
 
-      // Emitir resultados a todos los clientes conectados
+      //  Emitir resultados a todos los clientes conectados
       for (const [id, socket] of io.of('/').sockets) {
         if (clientsReady.has(id)) {
           socket.emit('done', {
@@ -139,5 +179,5 @@ startSock();
 
 const PORT = 3001;
 server.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`🚀 Servidor corriendo en https://localhost:${PORT}`);
 });
