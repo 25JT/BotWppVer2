@@ -7,6 +7,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+  const textarea = document.getElementById('mensaje');
+
+  textarea.addEventListener('input', () => {
+    textarea.style.height = 'auto'; // Reinicia altura
+    textarea.style.height = `${textarea.scrollHeight}px`; // Ajusta al contenido
+  });
+
+  // Opcional: ajustar altura si ya tiene texto cargado (ej. al editar)
+  window.addEventListener('DOMContentLoaded', () => {
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  });
 
 
 function enviarTN() {

@@ -14,6 +14,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import session from 'express-session';
+import conexion  from './conexion.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -63,121 +64,41 @@ const mensaje = msj
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-let clientsReady = new Set();
-let lastGeneratedQR = null;
 
-io.on('connection', (socket) => {
-  console.log('🌐 Cliente conectado');
+//REGISTRO DE SESION
 
-  socket.on('ready', () => {
-    console.log('✅ Cliente listo para recibir QR');
-    clientsReady.add(socket.id);
+//registo
+app.post('/registro', (req, res) => {
+    const { nombre , apellido,  email, contrasena } = req.body;
+    console.log("Nombre: " + nombre);
+    console.log("Apellido: " + apellido);
+    console.log("Email: " + email);
+    console.log("Contrasena: " + contrasena);
 
-    if (lastGeneratedQR) {
-      socket.emit('qr', lastGeneratedQR);
-      console.log('📡 QR reenviado al nuevo cliente');
-    }
-  });
 
-  socket.on('disconnect', () => {
-    clientsReady.delete(socket.id);
-    console.log('❌ Cliente desconectado');
-  });
+    const sql = 'INSERT INTO usuario (contrasena, correo, nombre, apellidos) VALUES (?, ?, ?, ?)';
+    conexion.query(sql, [contrasena,  email, nombre, apellido, ], (error, results) => {
+        if (error) {
+            console.error('Error al registrar usuario:', error);
+            return res.status(500).json({ error: 'Error al registrar usuario' });
+        }
+
+        if (results.affectedRows > 0) {
+            console.log("Usuario registrado correctamente: " + email);
+            res.status(200).json({ success: true, message: 'Usuario registrado correctamente' });
+        } else {
+            res.status(400).json({ success: false, message: 'Error al registrar usuario' });
+        }
+    })
+
 });
 
-const startSock = async () => {
-  const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'auth'));
-  const { version } = await fetchLatestBaileysVersion();
-
-  const sock = makeWASocket({
-    version,
-    auth: state,
-    printQRInTerminal: false
-  });
-
-  sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect, qr } = update;
-
-    if (qr) {
-      const qrImageData = await qrcode.toDataURL(qr);
-      lastGeneratedQR = qrImageData;
-
-      for (const [id, socket] of io.of('/').sockets) {
-        if (clientsReady.has(id)) {
-          socket.emit('qr', qrImageData);
-          console.log('📡 QR enviado a cliente listo');
-        }
-      }
-    }
-
-    if (connection === 'open') {
-      console.log('✅ Conectado a WhatsApp');
-
-      if (!numerosenv || !msj) {
-        console.warn('⚠️ No hay datos para enviar aún');
-        return;
-      }
-
-      const enviados = [];
-      const fallidos = [];
-
-      for (const numero of numerosenv) {
-        const jid = `57${numero}@s.whatsapp.net`;
-
-        try {
-          const [result] = await sock.onWhatsApp(numero);
-
-          if (!result?.exists) {
-            console.warn(`⚠️ El número ${numero} NO está registrado en WhatsApp`);
-            fallidos.push({ numero, error: 'No existe en WhatsApp' });
-            continue;
-          }
-
-          await sock.sendMessage(jid, { text: msj });
-          console.log(`📩 Mensaje enviado a ${numero}`);
-          enviados.push(numero);
-        } catch (err) {
-          console.error(`❌ Error enviando mensaje a ${numero}:`, err);
-          fallidos.push({ numero, error: err.message });
-        }
-      }
 
 
-      //  Emitir resultados a todos los clientes conectados
-      for (const [id, socket] of io.of('/').sockets) {
-        if (clientsReady.has(id)) {
-          socket.emit('done', {
-            enviados,
-            fallidos: fallidos.map(f => f.numero)
-          });
 
-          socket.emit('redirect', '/gracias.html');
-        }
-      }
-    }
 
-    if (connection === 'close') {
-      const shouldReconnect = lastDisconnect?.error instanceof Boom;
-      const isLoggedOut = lastDisconnect?.error?.output?.statusCode === DisconnectReason.loggedOut;
 
-      console.log('🔁 Conexión cerrada.');
-      if (isLoggedOut) {
-        console.log('⚠️ Sesión cerrada por el usuario. Borrando sesión y reiniciando...');
-        fs.rmSync(path.join(__dirname, 'auth'), { recursive: true, force: true });
-      }
-
-      if (shouldReconnect || isLoggedOut) {
-        setTimeout(() => startSock(), 2000);
-      }
-    }
-  });
-
-  sock.ev.on('creds.update', saveCreds);
-};
-
-startSock();
-
-const PORT = 3001;
+const PORT = 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en https://localhost:${PORT}`);
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });

@@ -27,7 +27,7 @@
 
                     <!-- Nombre -->
                     <div class="col-12 col-md-4 mb-2 mb-md-0">
-                        <h1 class="textnav marcatxt">EnvWeb</h1>
+                        <h1 class="textnav marcatxt">EnviaWP</h1>
                     </div>
 
                     <!-- Logo centrado -->
@@ -45,35 +45,39 @@
             </div>
         </nav>
     </section>
-    <div style="margin-top: 5%;"></div>
+    <div style="margin-top: 10%;"></div>
 
     <section>
-        <div class="contenedor">
-            <div class="container my-5">
-                <div class="row justify-content-center">
-                    <div class="col-md-8 text-center">
-                        <!-- Sección Teléfonos -->
-                        <h3 class="mb-3">TELEFONOS</h3>
-                        
-                        <input class="p-4 mb-5 bg-white rounded shadow telefonos" style="width: 100%;" placeholder="ESCRIBE LOS NUMEROS">
 
-                        <!-- Sección Mensajes -->
-                        <h3 class="mb-3">MENSAJES</h3>
-                        <input class="p-4 bg-white rounded shadow mensajes" style="width: 100%;" placeholder="ESCRIBE TU MSJ">
-                       <br>
-                       <br>
-                          <button style="box-shadow: none; " class="rounded shadow" onclick="enviarTN()" >ENVIAR</button>
-                          <button style="box-shadow: none; " class="btnvolver  rounded shadow">volver</button>
+        <div class="container my-5 contenedor">
+            <div class="row justify-content-center">
+                <div class="col-md-8 text-center">
+                    <!-- Sección Teléfonos -->
+                    <h3 class="mb-3">TELEFONOS</h3>
 
-                        
-                    </div>
+                    <input class="p-4 mb-5 bg-white rounded shadow telefonos" style="width: 100%;"
+                        placeholder="ESCRIBE LOS NUMEROS">
+
+                    <!-- Sección Mensajes -->
+                    <h3 class="mb-3">MENSAJES</h3>
+                  <!-- o más, si lo necesitas -->
+                        <textarea id="mensaje" placeholder="ESCRIBE TU MSJ" class="p-4 bg-white rounded shadow mensajes"
+                            style="width: 100%; white-space: pre-wrap; overflow: hidden; resize: none;" maxlength="1000"></textarea>
+
+           <br>
+                <br>
+
+                
+                    <button style="box-shadow: none; " class="rounded shadow" onclick="enviarTN()">ENVIAR</button>
+                    <button style="box-shadow: none; " class="btnvolver  rounded shadow">volver</button>
+<div style="margin-top: 2%;"></div>
+
                 </div>
             </div>
         </div>
-
-
-
     </section>
+    <div style="margin-block-end: 2%;"></div>
+
 
 
 

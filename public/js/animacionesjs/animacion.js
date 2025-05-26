@@ -101,34 +101,34 @@ gsap.to(".btnmarca", {
 })
 
 document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.querySelector(".btn");
+    const btn = document.querySelector(".btn");
 
-  btn.addEventListener("click", () => {
-    // Aplica fade out y escala a todo el body o contenedor principal
-    gsap.to("body", {
-      opacity: 0,
-      scale: 0.98,
-      duration: 0.6,
-      ease: "power1.inOut",
-      onComplete: () => {
-        window.location.href = "principal.html";
-      }
+    btn.addEventListener("click", () => {
+        // Aplica fade out y escala a todo el body o contenedor principal
+        gsap.to("body", {
+            opacity: 0,
+            scale: 0.98,
+            duration: 0.6,
+            ease: "power1.inOut",
+            onComplete: () => {
+                window.location.href = "principal.html";
+            }
+        });
     });
-  });
 });
 
 
 //imagenes
 
-gsap.to(".img1",{
-    y:100,
+gsap.to(".img1", {
+    y: 100,
     opacity: 1,
     delay: 0.5,
     ease: "back.out",
     duration: 1.5
 })
 
- gsap.from(".img1", {
+gsap.from(".img1", {
     delay: 0.4,
 
     scale: 0.8,
@@ -137,14 +137,47 @@ gsap.to(".img1",{
     ease: "back.out(2)",
     stagger: 0.3, // animación una tras otra
     onComplete: () => {
-      // Después de aparecer, hace un efecto de pulsación
-      gsap.to(".img1", {
-        scale: 1.05,
-        duration: 0.6,
-        repeat: -1,
-        yoyo: true,
-        ease: "power1.inOut",
-        stagger: 0.3
-      });
+        // Después de aparecer, hace un efecto de pulsación
+        gsap.to(".img1", {
+            scale: 1.05,
+            duration: 0.6,
+            repeat: -1,
+            yoyo: true,
+            ease: "power1.inOut",
+            stagger: 0.3
+        });
+    }
+})
+
+gsap.from('.animacionR', {
+    opacity: 0,
+    y: 100,
+    ease: "power1.in",
+    duration: 0.5,
+
+    scrollTrigger: {
+        trigger: '.animacionR',
+        start: "top 80%",
+        end: "center 80%",
+        scrub: true,
+        markers: false,
+        scroller: document.body,
+
+    }
+})
+
+
+gsap.from('.amimacionCrearCuenta',{
+     scale:1,
+    opacity: 0,
+    ease: "power1.in",
+    duration: 0.5,
+    scrollTrigger: {
+        trigger: '.amimacionCrearCuenta',
+        start: "top 80%",
+        end: "botton 50%",
+        scrub: true,
+        markers: true,
+        scroller: document.body,
     }
 })

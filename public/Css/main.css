@@ -58,6 +58,11 @@ h2 {
 h3 {
     font-family: "Enriqueta", serif;
 }
+input{
+    border: black solid 1px !important;
+    box-shadow: 0px 5px 8px #00000069,
+        0px 0px 0px #fdfdfd;
+}
 
 
 
@@ -133,16 +138,34 @@ img {
     background-color: aqua;
     margin-left: 10%;
     margin-right: 10%;
-    height: 500px;
+
     border-radius: 16px;
     border: solid 2px black;
     background-color: #5FE8FF;
     /* background: linear-gradient(180deg, rgba(210, 253, 255, 1) 0%, rgba(95, 232, 255, 1) 100%); */
-        box-shadow: 0px 15px 8px #c3c3c3,
+    box-shadow: 0px 15px 8px #c3c3c3,
         0px -15px 8px #fdfdfd;
-         transform: translateY(-20%);
+    transform: translateY(-20%);
 }
 
+.textosh1 {
+    font-family: "Fascinate Inline", system-ui;
+}
+
+.contenedorCuenta {
+    background-color: aqua;
+    margin-left: 10%;
+    margin-right: 10%;
+
+    border-radius: 16px;
+    border: solid 2px black;
+    background-color: #5FE8FF;
+    /* background: linear-gradient(180deg, rgba(210, 253, 255, 1) 0%, rgba(95, 232, 255, 1) 100%); */
+    box-shadow: 0px 15px 8px #c3c3c3,
+        0px -15px 8px #fdfdfd;
+    
+
+}
 
 @media (max-width: 1200px) {
     img {
