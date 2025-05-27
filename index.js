@@ -9,16 +9,14 @@ import {
 } from 'baileys';
 import qrcode from 'qrcode';
 import { Boom } from '@hapi/boom';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import session from 'express-session';
-import conexion  from './conexion.js';
+import conexion from './conexion.js';
 import bcrypt from 'bcrypt';
-
-
-
+import cookieParser from 'cookie-parser';
 
 
 
@@ -33,6 +31,25 @@ const io = new Server(server);
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Middleware de sesión
+const sessionMiddleware = session({
+  secret: 'mi-secreto',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+});
+
+app.use(cookieParser());
+app.use(sessionMiddleware);
+
+// Adaptar la sesión a Socket.IO
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, {}, next);
+});
+
+
+
 
 //datos de sesion guardados
 app.use(session({
@@ -128,7 +145,7 @@ app.post("/login", (req, res) => {
     req.session.userId = usuario.id;
     req.session.usuario = usuario;
 
-    res.status(200).json({ success: true, message: "Inicio de sesión exitoso", userId: usuario.id, correo: usuario.correo,});
+    res.status(200).json({ success: true, message: "Inicio de sesión exitoso", userId: usuario.id, correo: usuario.correo, });
   });
 });
 
@@ -181,32 +198,48 @@ app.post("/recuperar", (req, res) => {
 
 
 //bot qr envio de mensajes
-
-
-let clientsReady = new Set();
-let lastGeneratedQR = null;
+const sessions = new Map(); // userId => { sock, authPath }
+const sendingQueue = new Map(); // userId => boolean (para evitar envío doble)
+const qrsPendientes = new Map(); // userId => qr
+const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
 io.on('connection', (socket) => {
-  console.log('🌐 Cliente conectado');
+  const session = socket.request.session;
 
-  socket.on('ready', () => {
-    console.log('✅ Cliente listo para recibir QR');
-    clientsReady.add(socket.id);
+  if (!session?.userId) {
+    console.log('❌ Cliente no autenticado');
+    socket.disconnect();
+    return;
+  }
 
-    if (lastGeneratedQR) {
-      socket.emit('qr', lastGeneratedQR);
-      console.log('📡 QR reenviado al nuevo cliente');
+  const userId = session.userId;
+  console.log(`🌐 Usuario ${userId} conectado por Socket.IO`);
+
+  socket.on('ready', async () => {
+    console.log(`✅ Usuario ${userId} listo`);
+
+    if (sessions.has(userId)) {
+      const { sock } = sessions.get(userId);
+
+      if (sock?.user && sock?.authState) {
+        console.log(`🔒 Usuario ${userId} ya tiene sesión activa. Enviando mensajes...`);
+        await delay(500); // ⏳ Tiempo de espera mínimo por concurrencia
+        await enviarMensajes(sock, socket, userId);
+        return;
+      }
     }
+
+    await iniciarSesionWhatsApp(userId, socket);
   });
 
   socket.on('disconnect', () => {
-    clientsReady.delete(socket.id);
-    console.log('❌ Cliente desconectado');
+    console.log(`❌ Usuario ${userId} desconectado`);
   });
 });
 
-const startSock = async () => {
-  const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'auth'));
+async function iniciarSesionWhatsApp(userId, socket) {
+  const authPath = path.join(__dirname, 'auth', `user_${userId}`);
+  const { state, saveCreds } = await useMultiFileAuthState(authPath);
   const { version } = await fetchLatestBaileysVersion();
 
   const sock = makeWASocket({
@@ -215,87 +248,90 @@ const startSock = async () => {
     printQRInTerminal: false
   });
 
-  sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect, qr } = update;
+  sessions.set(userId, { sock, authPath });
 
+  sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
     if (qr) {
       const qrImageData = await qrcode.toDataURL(qr);
-      lastGeneratedQR = qrImageData;
-
-      for (const [id, socket] of io.of('/').sockets) {
-        if (clientsReady.has(id)) {
-          socket.emit('qr', qrImageData);
-          console.log('📡 QR enviado a cliente listo');
-        }
-      }
+      qrsPendientes.set(userId, qrImageData);
+      socket.emit('qr', qrImageData);
+      console.log(`📡 QR enviado a usuario ${userId}`);
     }
 
     if (connection === 'open') {
-      console.log('✅ Conectado a WhatsApp');
-
-      if (!numerosenv || !msj) {
-        console.warn('⚠️ No hay datos para enviar aún');
-        return;
-      }
-
-      const enviados = [];
-      const fallidos = [];
-
-      for (const numero of numerosenv) {
-        const jid = `57${numero}@s.whatsapp.net`;
-
-        try {
-          const [result] = await sock.onWhatsApp(numero);
-
-          if (!result?.exists) {
-            console.warn(`⚠️ El número ${numero} NO está registrado en WhatsApp`);
-            fallidos.push({ numero, error: 'No existe en WhatsApp' });
-            continue;
-          }
-
-          await sock.sendMessage(jid, { text: msj });
-          console.log(`📩 Mensaje enviado a ${numero}`);
-          enviados.push(numero);
-        } catch (err) {
-          console.error(`❌ Error enviando mensaje a ${numero}:`, err);
-          fallidos.push({ numero, error: err.message });
-        }
-      }
-
-
-      //  Emitir resultados a todos los clientes conectados
-      for (const [id, socket] of io.of('/').sockets) {
-        if (clientsReady.has(id)) {
-          socket.emit('done', {
-            enviados,
-            fallidos: fallidos.map(f => f.numero)
-          });
-
-          socket.emit('redirect', '/gracias.html');
-        }
-      }
+      console.log(`✅ Usuario ${userId} conectado a WhatsApp`);
+      await delay(300); // ⏳ Delay pequeño antes de enviar
+      await enviarMensajes(sock, socket, userId);
     }
 
     if (connection === 'close') {
-      const shouldReconnect = lastDisconnect?.error instanceof Boom;
       const isLoggedOut = lastDisconnect?.error?.output?.statusCode === DisconnectReason.loggedOut;
 
-      console.log('🔁 Conexión cerrada.');
       if (isLoggedOut) {
-        console.log('⚠️ Sesión cerrada por el usuario. Borrando sesión y reiniciando...');
-        fs.rmSync(path.join(__dirname, 'auth'), { recursive: true, force: true });
-      }
-
-      if (shouldReconnect || isLoggedOut) {
-        setTimeout(() => startSock(), 2000);
+        console.log(`🗑️ Usuario ${userId} cerró sesión, limpiando datos`);
+        sessions.delete(userId);
+        qrsPendientes.delete(userId);
+        await fs.rm(authPath, { recursive: true, force: true });
+      } else {
+        console.log(`🔄 Reintentando conexión para usuario ${userId}`);
+        await delay(2000); // Espera antes de reconectar
+        iniciarSesionWhatsApp(userId, socket);
       }
     }
   });
 
   sock.ev.on('creds.update', saveCreds);
-};
+}
 
-startSock();
+async function enviarMensajes(sock, socket, userId) {
+  if (sendingQueue.get(userId)) {
+    console.log(`⏳ Usuario ${userId} ya está enviando mensajes`);
+    return;
+  }
+
+  sendingQueue.set(userId, true);
+
+  if (!numerosenv || !msj) {
+    console.warn(`⚠️ Usuario ${userId} aún no ha definido números o mensaje`);
+    sendingQueue.set(userId, false);
+    return;
+  }
+
+  const enviados = [];
+  const fallidos = [];
+
+  for (const numero of numerosenv) {
+    const jid = `57${numero}@s.whatsapp.net`;
+
+    try {
+      const [result] = await sock.onWhatsApp(numero);
+      if (!result?.exists) {
+        console.warn(`⚠️ Número ${numero} no existe`);
+        fallidos.push({ numero, error: 'No existe' });
+        continue;
+      }
+
+      await sock.sendMessage(jid, { text: msj });
+      enviados.push(numero);
+      console.log(`📩 Enviado a ${numero}`);
+    } catch (err) {
+      fallidos.push({ numero, error: err.message });
+      console.error(`❌ Error en ${numero}: ${err.message}`);
+    }
+  }
+  
+
+  socket.emit('done', {
+    enviados,
+    fallidos: fallidos.map(f => f.numero)
+  });
+
+  socket.emit('redirect', '/gracias.html');
+  sendingQueue.set(userId, false);
+}
+
+
+
 
 
 
