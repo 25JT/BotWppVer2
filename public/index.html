@@ -22,6 +22,9 @@
 </head>
 
 <body>
+
+
+
     <!-- Nav bar -->
     <section class="navSection">
         <nav class="containerNav">
@@ -41,7 +44,13 @@
                     <!-- Contacto e Inicio sesión -->
                     <div class="col-12 col-md-4 text-center text-md-end">
                         <h2 class="d-block d-md-inline me-md-2 mb-2 mb-md-0 textnav ">Contacto</h2>
-                        <h2 class="d-block d-md-inline textnav">Inicio sesión</h2>
+                        <a onclick="toggleModal()" style=" cursor: pointer; color: black;" class="iniciarSesion">
+                            <h2 class="d-block d-md-inline textnav">Inicio sesión</h2>
+                        </a>
+                        <a onclick="cerrarSesion()" style=" cursor: pointer; display: none; color: black;"
+                            class="cerrarSesion">
+                            <h2 class="d-block d-md-inline textnav">Cerrar sesión</h2>
+                        </a>
                     </div>
 
                 </div>
@@ -64,7 +73,7 @@
         </div>
         <br>
         <div class="align-items-center  text-center btnmarca">
-            <button class="btn" onclick="sesion()">CREA UNA CUENTA</button>
+            <button style="height: 50px;" onclick="creaCuentaAni()"> CREA UNA CUENTA</button>
 
         </div>
         <!-- Imagenes -->
@@ -82,7 +91,7 @@
 
     <div style="margin-top: 9%;"></div>
 
-    <div class="text-center amimacionCrearCuenta">
+    <div class="text-center amimacionCrearCuenta" id="creaCuenta">
         <h1 class="textosh1">CREA TU CUENTA</h1>
     </div>
     <div style="margin-top: 4%;"></div>
@@ -134,7 +143,7 @@
                                 </div>
 
 
-                                
+
                                 <div class="mb-3">
                                     <label for="exampleInputPassword1" class="form-label">
                                         <h3>contraseña</h3>
@@ -161,18 +170,68 @@
                                     </div>
                                 </div>
 
-
-
-
                                 <button type="submit" style="box-shadow: none;" class="btn btn-primary">ENVIAR</button>
                             </form>
+                            <br>
+
                         </div>
+                        <a onclick="toggleModal()" style="cursor: pointer;">Ya tienes una cuenta <strong>Iniciar
+                                Sesión</strong></a>
+
                     </div>
                 </div>
             </div>
         </div>
         <div style="margin-bottom: 2%;"></div>
     </section>
+
+
+
+
+    <!-- Modal -->
+    <div id="loginModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <!-- Botón cerrar -->
+            <button onclick="toggleModal()" class="close-button" style="box-shadow: none;">&times;</button>
+
+            <h2 class="modal-title">INICIAR SESIÓN</h2>
+
+            <form id="loginForm" class="modal-form">
+                <div class="form-group">
+                    <label for="correo">Correo</label>
+                    <input type="email" name="correo" required>
+                </div>
+                <div class="form-group">
+                        Contraseña
+                    <div class="input-group">
+                    
+                        <input type="password" class="form-control" id="contrasena">
+                        <span class="input-group-text" style="cursor: pointer; border: 1px solid black;"
+                            onclick="togglePassword('contrasena', this)">
+                            <i class="bi bi-eye"></i>
+                        </span>
+                    </div>
+                </div>
+                <button type="submit" class="submit-button" style="box-shadow: none;">Entrar</button>
+            </form>
+           <a href="#" onclick="abrirRecuperarContrasena()" class="enlace-recuperar">¿Olvidaste tu contraseña?</a>
+        </div>
+    </div>
+
+<!-- Enlace para abrir modal -->
+
+
+<!-- Modal de recuperación -->
+<div id="modalRecuperar" class="modal-recuperar hidden">
+  <div class="modal-recuperar-contenido">
+    <h2 class="modal-recuperar-titulo">Recuperar contraseña</h2>
+    <form id="formRecuperar">
+      <input type="email" id="correoRecuperar" placeholder="Ingresa tu correo" class="input-recuperar" required />
+      <button type="submit" class="btn-enviar-recuperar">Enviar</button>
+    </form>
+    <button onclick="cerrarRecuperarContrasena()" class="btn-cerrar-recuperar">Cerrar</button>
+  </div>
+</div>
 
     <div style="margin-top: 20%;"></div>
 
@@ -181,8 +240,11 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO"
     crossorigin="anonymous"></script>
+
+
 <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@latest/bundled/lenis.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 <script src="https://unpkg.com/split-type"></script>
 <script src="/js/animacionesjs/animacion.js" defer></script>

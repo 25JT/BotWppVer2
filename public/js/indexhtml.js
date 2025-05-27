@@ -1,17 +1,46 @@
 
+verificarSesionActiva();
+actualizarBotonesSesion();
 
-  console.log("Hola");
-   
-  
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const btn = document.querySelector(".btn");
-    if (btn) {
-      btn.addEventListener("click", () => {
-        window.location.href = "principal.html";
-      });
-    }
+//animacion de los botones
+function creaCuentaAni() {
+  gsap.to(window, {
+    duration: 1,
+    scrollTo: "#creaCuenta",
+    ease: "power2.inOut"
   });
+}
+
+//abrir modal login
+function toggleModal() {
+  const modal = document.getElementById('loginModal');
+  if (modal.style.display === 'none')  {
+    modal.style.display = 'flex';
+  }
+
+  modal.classList.toggle('hidden');
+  modal.classList.toggle('flex');
+   
+
+}
+
+document.getElementById('loginForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  const correo = e.target.correo.value;
+  const contrasena = e.target.contrasena.value;
+  if (correo === "" || contrasena === "") {
+    alert("Por favor, completa todos los campos.");
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+    alert("Por favor, ingresa un correo electrónico válido.");
+    return;
+  }
+
+  loginUsuario(correo, contrasena);
+  toggleModal();
+});
+
 
 //Evento para el boton de mostrar contraseña
 function togglePassword(inputId, btn) {
@@ -30,7 +59,7 @@ function togglePassword(inputId, btn) {
 }
 
 
-  //Funcion registo 
+//Funcion registo 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("formRegistro");
   form.addEventListener("submit", (event) => {
@@ -47,8 +76,8 @@ async function registrarUsuario() {
   const contrasena = document.getElementById("exampleInputPassword1").value;
   const contrasenaConfirm = document.getElementById("Passwordconfirma").value;
 
- 
-    if (nombre === "" || apellido === "" || email === "" || contrasena   === "") {
+
+  if (nombre === "" || apellido === "" || email === "" || contrasena === "") {
     alert("Por favor, completa todos los campos.");
     return;
   }
@@ -71,15 +100,17 @@ async function registrarUsuario() {
   }
 
 
-    if (contrasena.length < 8) {
+  if (contrasena.length < 8) {
     alert("La contraseña debe tener al menos 8 caracteres.");
     return;
-    
+
   }
 
+  
+
   console.log(email);
-  
-  
+
+
   try {
     const response = await fetch("/registro", {
       method: "POST",
@@ -97,7 +128,8 @@ async function registrarUsuario() {
 
     const data = await response.json();
     if (data.success) {
-      alert("Usuario registrado correctamente");
+     // alert("Usuario registrado correctamente");
+     alert("Usuario registrado correctamente. Ahora puedes iniciar sesión.");
       window.location.href = "index.html";
     } else {
       alert("Error al registrar usuario: " + data.message);
@@ -106,7 +138,152 @@ async function registrarUsuario() {
     console.error("Error al registrar usuario:", error);
     alert("Error al registrar usuario. Por favor, inténtalo de nuevo más tarde.");
   }
-  
+
 }
 
 
+//login
+
+
+
+
+async function loginUsuario(correo, contrasena) {
+
+
+  const sesionActiva = await fetch('/sesion').then(res => res.json());
+
+  if (sesionActiva.loggedIn) {
+    alert("Ya tienes una sesión activa. No puedes iniciar sesión de nuevo.");
+    return;
+  }
+
+  try {
+    const response = await fetch("/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        correo: correo,
+        contrasena: contrasena
+      })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      //alert("Login exitoso");
+      console.log("Inicio de sesión exitoso:", data);
+
+      // Guardar el usuario en la sesión
+      sessionStorage.setItem('userId', data.userId);
+      sessionStorage.setItem('correo', data.correo);
+      //cambia inicio sesión por cerrar sesión
+
+
+      //window.location.href = "/main"; // Redirigir a la página principal
+
+      console.log("Inicio de sesión exitoso:", data);
+      // Redirigir a la página principal
+      window.location.href = "principal.html";
+    } else {
+      alert("Error al iniciar sesión: " + data.message);
+    }
+  } catch (error) {
+    console.error("Error al iniciar sesión:", error);
+    alert("Error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.");
+  }
+}
+
+// Cerrar sesión
+async function cerrarSesion() {
+  try {
+    const response = await fetch("/logout", {
+      method: "GET"
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      alert("Sesión cerrada correctamente");
+      // Redirigir a la página de inicio
+      window.location.href = "/";
+    } else {
+      alert("Error al cerrar sesión: " + data.message);
+    }
+  } catch (error) {
+    console.error("Error al cerrar sesión:", error);
+    alert("Error al cerrar sesión. Por favor, inténtalo de nuevo más tarde.");
+  }
+}
+
+
+// Verificar sesión al cargar main.html
+async function verificarSesionActiva() {
+  const res = await fetch('/sesion');
+  const data = await res.json();
+  if (!data.loggedIn) {
+    console.log("Usuario no autenticado");
+
+  } else {
+    console.log("Usuario activo:", data.userId);
+    sessionStorage.setItem('userId', data.userId);
+    sessionStorage.setItem('correo', data.correo);
+
+  }
+}
+
+async function actualizarBotonesSesion() {
+  const iniciarSesion = document.querySelector(".iniciarSesion");
+  const cerrarSesion = document.querySelector(".cerrarSesion");
+
+  try {
+    const res = await fetch("/sesion");
+    const data = await res.json();
+
+    if (data.loggedIn) {
+      iniciarSesion.style.display = "none";
+      cerrarSesion.style.display = "inline-block";
+    } else {
+      iniciarSesion.style.display = "inline-block";
+      cerrarSesion.style.display = "none";
+    }
+  } catch (error) {
+    console.error("Error al verificar sesión:", error);
+  }
+}
+
+//restablecer contraseña
+function abrirRecuperarContrasena() {
+    document.getElementById("modalRecuperar").classList.remove("hidden");
+     const modal = document.getElementById('loginModal');
+     modal.style.display = 'none'; // Ocultar el modal de inicio de sesión
+  }
+
+  function cerrarRecuperarContrasena() {
+    document.getElementById("modalRecuperar").classList.add("hidden");
+  }
+
+  document.getElementById("formRecuperar").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const correo = document.getElementById("correoRecuperar").value;
+
+    try {
+      const response = await fetch("/recuperar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ correo })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert("Revisa tu correo para continuar el proceso.");
+        cerrarRecuperarContrasena();
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      alert("Error al enviar solicitud.");
+      console.error(error);
+    }
+  });

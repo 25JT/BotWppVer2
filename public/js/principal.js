@@ -1,3 +1,8 @@
+
+const usuarioId = sessionStorage.getItem('usuarioId');
+console.log("Usuario ID desde sessionStorage:", usuarioId);
+
+
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.querySelector(".btnvolver");
   if (btn) {
@@ -52,6 +57,12 @@ function enviarTN() {
 async function validar(numeros, mensaje) {
   if (numeros.length === 0 || mensaje.trim() === '') {
     alert('Ingresa los números o el mensaje');
+    return;
+  }
+  const sesionActiva = await fetch('/sesion').then(res => res.json());
+  if (sesionActiva.loggedOut) {
+    alert("Debes iniciar sesión para enviar datos.");
+    window.location.href = '/index.html';
     return;
   }
 
