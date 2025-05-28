@@ -79,9 +79,10 @@
         <!-- Imagenes -->
         <div class="container ">
             <div class="row">
-                <div class="col-6 text-start img1 "> <img loading="lazy" src="Img/Messaging-bro (1).png" alt="imagen 1">
+                <div class="col-6 text-start img1 "> <img class="img" loading="lazy" src="Img/Messaging-bro (1).png"
+                        alt="imagen 1">
                 </div>
-                <div class="col-6 text-end img1 "><img loading="lazy" src="Img/Connected world-rafiki.svg"
+                <div class="col-6 text-end img1 "><img class="img" loading="lazy" src="Img/Connected world-rafiki.svg"
                         alt="imagen 2"></div>
             </div>
         </div>
@@ -202,9 +203,9 @@
                     <input type="email" name="correo" required>
                 </div>
                 <div class="form-group">
-                        Contraseña
+                    Contraseña
                     <div class="input-group">
-                    
+
                         <input type="password" class="form-control" id="contrasena">
                         <span class="input-group-text" style="cursor: pointer; border: 1px solid black;"
                             onclick="togglePassword('contrasena', this)">
@@ -214,24 +215,25 @@
                 </div>
                 <button type="submit" class="submit-button" style="box-shadow: none;">Entrar</button>
             </form>
-           <a href="#" onclick="abrirRecuperarContrasena()" class="enlace-recuperar">¿Olvidaste tu contraseña?</a>
+            <a href="#" onclick="abrirRecuperarContrasena()" class="enlace-recuperar">¿Olvidaste tu contraseña?</a>
         </div>
     </div>
 
-<!-- Enlace para abrir modal -->
+    <!-- Enlace para abrir modal -->
 
 
-<!-- Modal de recuperación -->
-<div id="modalRecuperar" class="modal-recuperar hidden">
-  <div class="modal-recuperar-contenido">
-    <h2 class="modal-recuperar-titulo">Recuperar contraseña</h2>
-    <form id="formRecuperar">
-      <input type="email" id="correoRecuperar" placeholder="Ingresa tu correo" class="input-recuperar" required />
-      <button type="submit" class="btn-enviar-recuperar">Enviar</button>
-    </form>
-    <button onclick="cerrarRecuperarContrasena()" class="btn-cerrar-recuperar">Cerrar</button>
-  </div>
-</div>
+    <!-- Modal de recuperación -->
+    <div id="modalRecuperar" class="modal-recuperar hidden">
+        <div class="modal-recuperar-contenido">
+            <h2 class="modal-recuperar-titulo">Recuperar contraseña</h2>
+            <form id="formRecuperar">
+                <input type="email" id="correoRecuperar" placeholder="Ingresa tu correo" class="input-recuperar"
+                    required />
+                <button type="submit" class="btn-enviar-recuperar">Enviar</button>
+            </form>
+            <button onclick="cerrarRecuperarContrasena()" class="btn-cerrar-recuperar">Cerrar</button>
+        </div>
+    </div>
 
     <div style="margin-top: 20%;"></div>
 

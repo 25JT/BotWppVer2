@@ -139,7 +139,7 @@ gsap.from(".img1", {
     onComplete: () => {
         // Después de aparecer, hace un efecto de pulsación
         gsap.to(".img1", {
-            scale: 1.05,
+            scale: 1.06,
             duration: 0.6,
             repeat: -1,
             yoyo: true,

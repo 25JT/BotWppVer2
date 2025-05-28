@@ -66,20 +66,16 @@ app.use(express.json()); // ✅ Necesario para leer JSON en req.body
 let numerosenv = null;
 let msj = null;
 
+
+
 app.post('/validar/datos', (req, res) => {
   const { numeros, mensaje } = req.body;
-  //console.log('Números:', numeros);
-  //console.log('Mensaje:', mensaje);
-
-  numerosenv = numeros;
-  msj = mensaje;
-
-
-
-
-
-  res.json
-    ({ status: 'ok', recibidos: numeros.length });
+  const userId = req.session.userId;
+  if (!userId) {
+    return res.status(401).json({ status: 'error', message: 'No autenticado' });
+  }
+  datosUsuarios.set(userId, { numeros, mensaje });
+  res.json({ status: 'ok', recibidos: numeros.length });
 });
 
 const numerosEnviar = numerosenv
@@ -198,6 +194,7 @@ app.post("/recuperar", (req, res) => {
 
 
 //bot qr envio de mensajes
+const datosUsuarios = new Map(); // userId => { numeros, mensaje }
 const sessions = new Map(); // userId => { sock, authPath }
 const sendingQueue = new Map(); // userId => boolean (para evitar envío doble)
 const qrsPendientes = new Map(); // userId => qr
@@ -284,6 +281,7 @@ async function iniciarSesionWhatsApp(userId, socket) {
 }
 
 async function enviarMensajes(sock, socket, userId) {
+  socket.emit('enviando');
   if (sendingQueue.get(userId)) {
     console.log(`⏳ Usuario ${userId} ya está enviando mensajes`);
     return;
@@ -291,16 +289,19 @@ async function enviarMensajes(sock, socket, userId) {
 
   sendingQueue.set(userId, true);
 
-  if (!numerosenv || !msj) {
+  // Obtén los datos del usuario actual
+  const datos = datosUsuarios.get(userId);
+  if (!datos || !datos.numeros || !datos.mensaje) {
     console.warn(`⚠️ Usuario ${userId} aún no ha definido números o mensaje`);
     sendingQueue.set(userId, false);
     return;
   }
 
+  const { numeros, mensaje } = datos;
   const enviados = [];
   const fallidos = [];
 
-  for (const numero of numerosenv) {
+  for (const numero of numeros) {
     const jid = `57${numero}@s.whatsapp.net`;
 
     try {
@@ -311,7 +312,7 @@ async function enviarMensajes(sock, socket, userId) {
         continue;
       }
 
-      await sock.sendMessage(jid, { text: msj });
+      await sock.sendMessage(jid, { text: mensaje });
       enviados.push(numero);
       console.log(`📩 Enviado a ${numero}`);
     } catch (err) {
@@ -319,7 +320,6 @@ async function enviarMensajes(sock, socket, userId) {
       console.error(`❌ Error en ${numero}: ${err.message}`);
     }
   }
-  
 
   socket.emit('done', {
     enviados,
@@ -329,6 +329,8 @@ async function enviarMensajes(sock, socket, userId) {
   socket.emit('redirect', '/gracias.html');
   sendingQueue.set(userId, false);
 }
+
+
 
 
 
