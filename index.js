@@ -69,12 +69,21 @@ let msj = null;
 
 
 app.post('/validar/datos', (req, res) => {
-  const { numeros, mensaje } = req.body;
-  const userId = req.session.userId;
+  const session = req.session;
+  const userId = session?.userId;
+
   if (!userId) {
-    return res.status(401).json({ status: 'error', message: 'No autenticado' });
+    return res.status(401).json({ error: 'Usuario no autenticado' });
   }
+
+  const { numeros, mensaje } = req.body;
+
+  if (!Array.isArray(numeros) || numeros.length > 100) {
+    return res.status(400).json({ error: 'Máximo 100 números permitidos' });
+  }
+
   datosUsuarios.set(userId, { numeros, mensaje });
+
   res.json({ status: 'ok', recibidos: numeros.length });
 });
 
@@ -220,7 +229,7 @@ io.on('connection', (socket) => {
 
       if (sock?.user && sock?.authState) {
         console.log(`🔒 Usuario ${userId} ya tiene sesión activa. Enviando mensajes...`);
-        await delay(500); // ⏳ Tiempo de espera mínimo por concurrencia
+        await delay(1000); // ⏳ Tiempo de espera mínimo por concurrencia
         await enviarMensajes(sock, socket, userId);
         return;
       }
@@ -232,55 +241,55 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`❌ Usuario ${userId} desconectado`);
   });
-});
 
-async function iniciarSesionWhatsApp(userId, socket) {
-  const authPath = path.join(__dirname, 'auth', `user_${userId}`);
-  const { state, saveCreds } = await useMultiFileAuthState(authPath);
-  const { version } = await fetchLatestBaileysVersion();
 
-  const sock = makeWASocket({
-    version,
-    auth: state,
-    printQRInTerminal: false
-  });
+  async function iniciarSesionWhatsApp(userId, socket) {
+    const authPath = path.join(__dirname, 'auth', `user_${userId}`);
+    const { state, saveCreds } = await useMultiFileAuthState(authPath);
+    const { version } = await fetchLatestBaileysVersion();
 
-  sessions.set(userId, { sock, authPath });
+    const sock = makeWASocket({
+      version,
+      auth: state,
+      printQRInTerminal: false
+    });
 
-  sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
-    if (qr) {
-      const qrImageData = await qrcode.toDataURL(qr);
-      qrsPendientes.set(userId, qrImageData);
-      socket.emit('qr', qrImageData);
-      console.log(`📡 QR enviado a usuario ${userId}`);
-    }
+    sessions.set(userId, { sock, authPath });
 
-    if (connection === 'open') {
-      console.log(`✅ Usuario ${userId} conectado a WhatsApp`);
-      await delay(300); // ⏳ Delay pequeño antes de enviar
-      await enviarMensajes(sock, socket, userId);
-    }
-
-    if (connection === 'close') {
-      const isLoggedOut = lastDisconnect?.error?.output?.statusCode === DisconnectReason.loggedOut;
-
-      if (isLoggedOut) {
-        console.log(`🗑️ Usuario ${userId} cerró sesión, limpiando datos`);
-        sessions.delete(userId);
-        qrsPendientes.delete(userId);
-        await fs.rm(authPath, { recursive: true, force: true });
-      } else {
-        console.log(`🔄 Reintentando conexión para usuario ${userId}`);
-        await delay(2000); // Espera antes de reconectar
-        iniciarSesionWhatsApp(userId, socket);
+    sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
+      if (qr) {
+        const qrImageData = await qrcode.toDataURL(qr);
+        qrsPendientes.set(userId, qrImageData);
+        socket.emit('qr', qrImageData);
+        console.log(`📡 QR enviado a usuario ${userId}`);
       }
-    }
-  });
 
-  sock.ev.on('creds.update', saveCreds);
-}
+      if (connection === 'open') {
+        console.log(`✅ Usuario ${userId} conectado a WhatsApp`);
+        await delay(400); // ⏳ Delay pequeño antes de enviar
+        await enviarMensajes(sock, socket, userId);
+      }
 
-async function enviarMensajes(sock, socket, userId) {
+      if (connection === 'close') {
+        const isLoggedOut = lastDisconnect?.error?.output?.statusCode === DisconnectReason.loggedOut;
+
+        if (isLoggedOut) {
+          console.log(`🗑️ Usuario ${userId} cerró sesión, limpiando datos`);
+          sessions.delete(userId);
+          qrsPendientes.delete(userId);
+          await fs.rm(authPath, { recursive: true, force: true });
+        } else {
+          console.log(`🔄 Reintentando conexión para usuario ${userId}`);
+          await delay(2000); // Espera antes de reconectar
+          iniciarSesionWhatsApp(userId, socket);
+        }
+      }
+    });
+
+    sock.ev.on('creds.update', saveCreds);
+  }
+
+  async function enviarMensajes(sock, socket, userId) {
   socket.emit('enviando');
   if (sendingQueue.get(userId)) {
     console.log(`⏳ Usuario ${userId} ya está enviando mensajes`);
@@ -289,7 +298,6 @@ async function enviarMensajes(sock, socket, userId) {
 
   sendingQueue.set(userId, true);
 
-  // Obtén los datos del usuario actual
   const datos = datosUsuarios.get(userId);
   if (!datos || !datos.numeros || !datos.mensaje) {
     console.warn(`⚠️ Usuario ${userId} aún no ha definido números o mensaje`);
@@ -301,23 +309,157 @@ async function enviarMensajes(sock, socket, userId) {
   const enviados = [];
   const fallidos = [];
 
-  for (const numero of numeros) {
-    const jid = `57${numero}@s.whatsapp.net`;
+  const delayAleatorio = () => delay(Math.floor(Math.random() * (10000 - 6000 + 1)) + 4000);
 
-    try {
-      const [result] = await sock.onWhatsApp(numero);
-      if (!result?.exists) {
-        console.warn(`⚠️ Número ${numero} no existe`);
-        fallidos.push({ numero, error: 'No existe' });
-        continue;
+  const saludos = [
+    "Hola 👋", "¡Saludos!", "Buenas, ¿cómo estás?", "Un gusto saludarte", "Hola, ¿cómo te va?",
+    "¡Qué tal!", "Muy buenas 🌞", "¡Buen día!", "Saludos cordiales 👋", "Hola, espero que estés bien",
+    "¡Hola! Te quiero compartir algo interesante", "Hola 👋 ¿cómo va todo?",
+    "¡Hola! Espero que tengas un gran día", "¡Hey! ¿Cómo andas?", "Hola, ¡bienvenido!",
+    "Hola, quería contarte algo 🤗",
+  ];
+
+  const firmas = [
+    "Atentamente", "Gracias por tu atención", "Estamos para ayudarte", "Cualquier duda, escríbenos",
+    "Saludos cordiales", "Con gusto te apoyamos", "¡Te esperamos!", "Gracias por tu tiempo 🙌",
+    "Esperamos tu respuesta", "Con aprecio", "Con estima", "Seguimos en contacto",
+    "Gracias por confiar en nosotros", "Aquí estamos para lo que necesites", "¡Éxitos! 💪",
+  ];
+
+  const sinonimos = {
+    "ganar dinero": ["generar ingresos", "obtener ganancias", "tener ingresos extra", "producir dinero", "recibir pagos", "incrementar tus finanzas"],
+    "ventas": ["comercialización", "distribución", "promoción de productos", "negociación", "transacciones", "ofrecer productos"],
+    "negocio": ["emprendimiento", "proyecto", "actividad comercial", "iniciativa personal", "microempresa"],
+    "premios": ["beneficios", "recompensas", "incentivos", "bonificaciones", "ventajas"],
+    "entrega": ["envío", "despacho", "distribución", "remisión", "traslado de productos"],
+    "clientes": ["compradores", "usuarios", "personas interesadas", "público", "contactos"],
+    "producto": ["artículo", "ítem", "mercancía", "bien", "objeto"],
+    "dinero": ["plata", "efectivo", "ingresos", "capital", "fondos", "recursos"],
+    "pedido": ["compra", "solicitud", "encargo", "orden"],
+    "catálogo": ["colección", "listado de productos", "muestrario", "inventario"],
+    "beneficios": ["ventajas", "atributos positivos", "ganancias", "recompensas"],
+    "oportunidad": ["posibilidad", "ventana de crecimiento", "propuesta", "alternativa"],
+  };
+
+function maquillarMensajeLibre(texto) {
+  const extras = [
+    "Si tienes dudas, estoy por aquí 👀",
+    "Te puedo ayudar cuando quieras ✌️",
+    "Sin compromiso, solo quiero compartirlo contigo 😊",
+    "Esta info puede ser útil para ti 😉",
+    "Es solo una idea, tú decides 💭",
+      "Avísame si te interesa.",
+       "¡Gracias por tu tiempo!",
+  "Quedo atento a tus comentarios.",
+  ];
+
+  const signosFinales = ['!', '!!', '.', '...'];
+  const probabilidadDeReemplazo = Math.random() * (0.8 - 0.5) + 0.5;
+
+  let resultado = texto;
+
+  // Reemplazos con sinónimos
+  for (const [clave, variantes] of Object.entries(sinonimos)) {
+    const regex = new RegExp(`\\b${clave}\\b`, 'gi');
+    if (regex.test(resultado) && Math.random() < probabilidadDeReemplazo) {
+      resultado = resultado.replace(regex, () => {
+        return variantes[Math.floor(Math.random() * variantes.length)];
+      });
+    }
+  }
+
+  // Agrega frase extra al final con probabilidad
+  if (Math.random() < 0.4) {
+    resultado += `\n\n${extras[Math.floor(Math.random() * extras.length)]}`;
+  }
+
+  // Saludo y firma aleatorios
+  let saludo = saludos[Math.floor(Math.random() * saludos.length)];
+  let firma = firmas[Math.floor(Math.random() * firmas.length)];
+
+  // Variación de signos de puntuación
+  saludo = saludo.replace(/!$/, signosFinales[Math.floor(Math.random() * signosFinales.length)]);
+  firma = firma.replace(/!$/, signosFinales[Math.floor(Math.random() * signosFinales.length)]);
+
+  // Estructura fija: saludo, cuerpo y firma
+  return `${saludo}\n\n${resultado}\n\n${firma}`;
+}
+
+
+  // Devuelve un número aleatorio entre min y max (inclusive)
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  // Mezcla el array de números
+  function mezclarArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // Divide en lotes de tamaño aleatorio entre 10 y 20
+  function dividirLotesAleatorios(arr) {
+    const mezclado = mezclarArray([...arr]);
+    const lotes = [];
+    let i = 0;
+    while (i < mezclado.length) {
+      const tamLote = randomInt(10, 20);
+      lotes.push(mezclado.slice(i, i + tamLote));
+      i += tamLote;
+    }
+    return lotes;
+  }
+
+  const lotes = dividirLotesAleatorios(numeros);
+
+  for (const [i, lote] of lotes.entries()) {
+    console.log(`🚀 Enviando lote ${i + 1}/${lotes.length} (Usuario ${userId})`);
+
+    for (const numero of lote) {
+      await delayAleatorio();
+
+      const mensajeFinal = maquillarMensajeLibre(mensaje);
+      const jid = `57${numero}@s.whatsapp.net`;
+
+      try {
+        const [result] = await sock.onWhatsApp(numero);
+        if (!result?.exists) {
+          console.warn(`⚠️ Número ${numero} no existe`);
+          fallidos.push({ numero, error: 'No existe' });
+          continue;
+        }
+
+        await sock.sendMessage(jid, { text: mensajeFinal });
+        enviados.push(numero);
+        console.log(`📩 Enviado a ${numero}`);
+      } catch (err) {
+        fallidos.push({ numero, error: err.message });
+        console.error(`❌ Error en ${numero}: ${err.message}`);
+      }
+    }
+
+    if (i < lotes.length - 1) {
+      const pausaMs = randomInt(5 * 60 * 1000, 10 * 60 * 1000);
+      const pausaSegundos = Math.floor(pausaMs / 1000);
+      const pausaMinutos = Math.floor(pausaSegundos / 60);
+
+      const mensajePausa = `⏳ Pausa de ${pausaMinutos} minutos para evitar bloqueos. En breve se continuará...`;
+      console.log(`🛑 ${mensajePausa}`);
+
+      socket.emit('pausaIniciada', {
+        mensaje: mensajePausa,
+        tiempo: pausaSegundos,
+      });
+
+      for (let s = pausaSegundos; s > 0; s--) {
+        socket.emit('pausaTiempo', s);
+        await delay(1000);
       }
 
-      await sock.sendMessage(jid, { text: mensaje });
-      enviados.push(numero);
-      console.log(`📩 Enviado a ${numero}`);
-    } catch (err) {
-      fallidos.push({ numero, error: err.message });
-      console.error(`❌ Error en ${numero}: ${err.message}`);
+      socket.emit('pausaFinalizada', '✅ Continuando con el siguiente lote...');
     }
   }
 
@@ -326,15 +468,12 @@ async function enviarMensajes(sock, socket, userId) {
     fallidos: fallidos.map(f => f.numero)
   });
 
+  sendingQueue.set(userId, false);
   socket.emit('redirect', '/gracias.html');
   sendingQueue.set(userId, false);
 }
 
-
-
-
-
-
+}); 
 
 
 const PORT = 3000;

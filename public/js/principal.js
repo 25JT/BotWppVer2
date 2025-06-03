@@ -11,13 +11,42 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-
+  const contador = document.getElementById('contador');
   const textarea = document.getElementById('mensaje');
 
   textarea.addEventListener('input', () => {
     textarea.style.height = 'auto'; // Reinicia altura
     textarea.style.height = `${textarea.scrollHeight}px`; // Ajusta al contenido
+      const currentLength = textarea.value.length;
+  contador.textContent = `${currentLength} / 1000`;
+
+  if (currentLength === textarea.maxLength) {
+    alert('Has alcanzado el límite máximo de 1000 caracteres.');
+  }
   });
+
+    const contador2 = document.getElementById('contador2');
+  const textarea2 = document.getElementById('numeros');
+
+textarea2.addEventListener('input', () => {
+  const numeros = textarea2.value
+       const currentLength = textarea2.value.length;
+  contador2.textContent = `${currentLength} / 1000`;
+ if (currentLength === textarea.maxLength) {
+    alert('Has alcanzado el límite máximo de 1000 caracteres.');
+  }
+
+  numeros = numeros
+    .split(/\n+/) // o usa ',' si separan por coma
+    .map(n => n.trim())
+    .filter(n => n !== '');
+
+  if (numeros.length > 100) {
+    alert('Solo puedes ingresar hasta 100 números');
+    // Limita al primeros 100 y actualiza el contenido
+    textarea2.value = numeros.slice(0, 100).join('\n');
+  }
+});
 
   // Opcional: ajustar altura si ya tiene texto cargado (ej. al editar)
   window.addEventListener('DOMContentLoaded', () => {
@@ -52,6 +81,8 @@ function enviarTN() {
   
   validar(numeros, mensaje)
 }
+
+
 
 
 async function validar(numeros, mensaje) {

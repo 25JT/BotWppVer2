@@ -362,6 +362,36 @@ button:hover {
   animation: spin 1s linear infinite;
 }
 
+#pausa-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  font-family: sans-serif;
+  z-index: 9999;
+  max-width: 300px;
+}
+
+#pausa-box {
+  text-align: center;
+}
+
+#pausa-mensaje {
+  font-weight: bold;
+  color: #856404;
+  margin-bottom: 8px;
+}
+
+#pausa-tiempo {
+  font-size: 14px;
+  color: #856404;
+}
+
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);

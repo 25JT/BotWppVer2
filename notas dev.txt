@@ -9,4 +9,6 @@ se instala npm install baileys
 se instala npm install qrcode-terminal
 
 
+Maximo 100 numero si se pasa ban 
+
     
