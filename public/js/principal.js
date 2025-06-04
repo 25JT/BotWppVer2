@@ -1,4 +1,4 @@
-
+verificarSesionActiva();
 const usuarioId = sessionStorage.getItem('usuarioId');
 console.log("Usuario ID desde sessionStorage:", usuarioId);
 
@@ -29,8 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const textarea2 = document.getElementById('numeros');
 
 textarea2.addEventListener('input', () => {
-  const numeros = textarea2.value
-       const currentLength = textarea2.value.length;
+  let numeros = textarea2.value;
+  const currentLength = textarea2.value.length;
   contador2.textContent = `${currentLength} / 1000`;
  if (currentLength === textarea.maxLength) {
     alert('Has alcanzado el límite máximo de 1000 caracteres.');
@@ -113,6 +113,18 @@ async function validar(numeros, mensaje) {
 }
 
 
+
+async function verificarSesionActiva() {
+  const res = await fetch('/sesion');
+  const data = await res.json();
+  if (!data.loggedIn) {
+    console.log ("Usuario no autenticado");
+    alert("Debes iniciar sesión para enviar datos.");
+    window.location.href = '/index.html';
+  } else {
+    console.log("Usuario activo: ACTIVO");
+  }
+}
 
 
 

@@ -1,6 +1,9 @@
+verificarSesionActiva();
+
 const socket = io();
 const qrImage = document.getElementById('qr');
 const estado = document.getElementById('estado');
+
 
 // Avisar al backend que estamos listos
 socket.emit('ready');
@@ -104,4 +107,16 @@ function formatTiempo(segundos) {
   const min = String(Math.floor(segundos / 60)).padStart(2, '0');
   const sec = String(segundos % 60).padStart(2, '0');
   return `${min}:${sec}`;
+}
+
+async function verificarSesionActiva() {
+  const res = await fetch('/sesion');
+  const data = await res.json();
+  if (!data.loggedIn) {
+    console.log ("Usuario no autenticado");
+    alert("Debes iniciar sesión para enviar datos.");
+    window.location.href = '/index.html';
+  } else {
+    
+  }
 }

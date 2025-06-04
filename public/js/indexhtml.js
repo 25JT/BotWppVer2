@@ -221,7 +221,7 @@ async function verificarSesionActiva() {
   const res = await fetch('/sesion');
   const data = await res.json();
   if (!data.loggedIn) {
-    console.log("Usuario no autenticado");
+    console.log ("Usuario no autenticado");
 
   } else {
     console.log("Usuario activo:", data.userId);

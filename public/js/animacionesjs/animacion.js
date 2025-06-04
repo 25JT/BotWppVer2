@@ -177,7 +177,21 @@ gsap.from('.amimacionCrearCuenta',{
         start: "top 80%",
         end: "botton 50%",
         scrub: true,
-        markers: true,
+        markers: false,
         scroller: document.body,
     }
 })
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  gsap.from(".fade-in-scroll", {
+    opacity: 0,
+    y: 80,
+    duration: 1.2,
+    ease: "power2.out",
+    scrollTrigger: {
+      trigger: ".fade-in-scroll",
+      start: "top 80%", // cuando el top del elemento llegue al 80% de la pantalla
+      toggleActions: "play none none none" // solo una vez
+    }
+  });
