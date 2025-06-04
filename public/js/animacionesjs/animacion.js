@@ -100,22 +100,6 @@ gsap.to(".btnmarca", {
     duration: 1.5
 })
 
-document.addEventListener("DOMContentLoaded", () => {
-    const btn = document.querySelector(".btn");
-
-    btn.addEventListener("click", () => {
-        // Aplica fade out y escala a todo el body o contenedor principal
-        gsap.to("body", {
-            opacity: 0,
-            scale: 0.98,
-            duration: 0.6,
-            ease: "power1.inOut",
-            onComplete: () => {
-                window.location.href = "principal.html";
-            }
-        });
-    });
-});
 
 
 //imagenes
@@ -167,8 +151,8 @@ gsap.from('.animacionR', {
 })
 
 
-gsap.from('.amimacionCrearCuenta',{
-     scale:1,
+gsap.from('.amimacionCrearCuenta', {
+    scale: 1,
     opacity: 0,
     ease: "power1.in",
     duration: 0.5,
@@ -182,16 +166,178 @@ gsap.from('.amimacionCrearCuenta',{
     }
 })
 
-  gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger);
 
-  gsap.from(".fade-in-scroll", {
+gsap.from(".fade-in-scroll", {
     opacity: 0,
     y: 80,
     duration: 1.2,
     ease: "power2.out",
     scrollTrigger: {
-      trigger: ".fade-in-scroll",
-      start: "top 80%", // cuando el top del elemento llegue al 80% de la pantalla
-      toggleActions: "play none none none" // solo una vez
+        trigger: ".fade-in-scroll",
+        start: "top 80%", // cuando el top del elemento llegue al 80% de la pantalla
+        toggleActions: "play none none none" // solo una vez
     }
-  });
+});
+
+gsap.to(".zoom-letter", {
+    scale: 0.5,
+    opacity: 1,
+    scrollTrigger: {
+        trigger: ".zoom-letter",
+        start: "20% 40%",
+        end: "60% 20%",
+        scrub: true,
+        markers: false,
+        scroller: document.body
+    }
+})
+
+// Texto final aparece después
+gsap.to(".final-text", {
+    opacity: 1,
+    y: 0,
+    scrollTrigger: {
+        trigger: ".final-text",
+        start: "top 85%",
+        end: "top 75%",
+        scrub: true,
+        markers: false,
+        scroller: document.body
+    }
+})
+gsap.to(".zoom-letter2", {
+    scale: 1.5,
+    xPercent: -50,
+    yPercent: -50,
+    opacity: 1,
+    ease: "power2.inOut",
+    duration: 1.5,
+    transformOrigin: "center center",
+    scrollTrigger: {
+        trigger: ".zoom-letter2",
+        start: "90% 80%",
+        end: "60% 50%",
+        scrub: true,
+        scroller: document.body
+    }
+});
+
+gsap.to(".final-text3", {
+    opacity: 1,
+    y: 0,
+    scrollTrigger: {
+        trigger: ".final-text3",
+        start: "top 85%",
+        end: "top 75%",
+        scrub: true,
+
+        scroller: document.body
+    }
+})
+
+gsap.to(".final-text4", {
+    opacity: 1,
+    y: 0,
+    scrollTrigger: {
+        trigger: ".final-text4",
+        start: "top 85%",
+        end: "top 75%",
+        scrub: true,
+
+        scroller: document.body
+    }
+})
+gsap.to(".final-text5", {
+    opacity: 1,
+    y: 0,
+    scrollTrigger: {
+        trigger: ".final-text5",
+        start: "top 85%",
+        end: "top 75%",
+        scrub: true,
+
+        scroller: document.body
+    }
+})
+
+gsap.to(".final-text6", {
+    opacity: 1,
+    y: 0,
+    scrollTrigger: {
+        trigger: ".final-text6",
+        start: "top 85%",
+        end: "top 75%",
+        scrub: true,
+
+        scroller: document.body
+    }
+})
+gsap.to(".final-text6", {
+    opacity: 1,
+    y: 0,
+    scrollTrigger: {
+        trigger: ".final-text6",
+        start: "top 85%",
+        end: "top 75%",
+        scrub: true,
+      
+        scroller: document.body
+    }
+})
+gsap.to(".final-text7", {
+    opacity: 1,
+    y: 0,
+    scrollTrigger: {
+        trigger: ".final-text7",
+        start: "top 85%",
+        end: "top 75%",
+        scrub: true,
+        
+        scroller: document.body
+    }
+})
+
+gsap.to(".final-text8", {
+    opacity: 1,
+    y: 0,
+    scrollTrigger: {
+        trigger: ".final-text8",
+        start: "top 85%",
+        end: "top 75%",
+        scrub: true,
+
+        scroller: document.body
+    }
+})
+
+gsap.to(".final-text9", {
+    opacity: 1,
+    y: 0,
+    scrollTrigger: {
+        trigger: ".final-text9",
+        start: "top 85%",
+        end: "top 75%",
+        scrub: true,
+  
+        scroller: document.body
+    }
+})
+
+gsap.to(".anifooter", {
+    opacity: 1,
+    x: 0.5,
+    scrollTrigger: {
+        trigger: ".anifooter",
+        start: "top 95%",
+        end: "top 85%",
+        scrub: true,
+        markers:true,
+  
+        scroller: document.body
+    }
+})
+
+
+ScrollTrigger.refresh()
+

@@ -11,6 +11,14 @@ function creaCuentaAni() {
   });
 }
 
+function masInfo() {
+  gsap.to(window, {
+    duration: 1,
+    scrollTo: "#masInfo",
+    ease: "power2.inOut"
+  });
+}
+
 //abrir modal login
 function toggleModal() {
   const modal = document.getElementById('loginModal');
@@ -130,7 +138,7 @@ async function registrarUsuario() {
     if (data.success) {
      // alert("Usuario registrado correctamente");
      alert("Usuario registrado correctamente. Ahora puedes iniciar sesión.");
-      window.location.href = "index.html";
+      
     } else {
       alert("Error al registrar usuario: " + data.message);
     }
