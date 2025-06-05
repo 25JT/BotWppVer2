@@ -1,4 +1,6 @@
+
 verificarSesionActiva();
+verificarEnvioActivo();
 const usuarioId = sessionStorage.getItem('usuarioId');
 console.log("Usuario ID desde sessionStorage:", usuarioId);
 
@@ -123,6 +125,15 @@ async function verificarSesionActiva() {
     window.location.href = '/index.html';
   } else {
     console.log("Usuario activo: ACTIVO");
+  }
+}
+
+async function verificarEnvioActivo() {
+  const res = await fetch('/estado-envio');
+  const data = await res.json();
+  if (data.envio === 'en-progreso') {
+    // Redirige a index2.html si hay envío en curso o pausa
+    window.location.href = '/index2.html';
   }
 }
 

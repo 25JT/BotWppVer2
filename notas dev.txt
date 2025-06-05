@@ -11,4 +11,9 @@ se instala npm install qrcode-terminal
 
 Maximo 100 numero si se pasa ban 
 
-    
+Fallos y mejoras
+
+Agregar boton de cancelar 
+
+se tiene presente una falla en la cual si el usuario cierra la pestaña 
+no lo reenvia a la pagina gracias.html hasta que recargue la pagina.

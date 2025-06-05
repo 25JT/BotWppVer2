@@ -365,12 +365,12 @@ button:hover {
 #pausa-container {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+    left: 40%;
   background: #fff3cd;
   border: 1px solid #ffeeba;
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.336);
   font-family: sans-serif;
   z-index: 9999;
   max-width: 300px;

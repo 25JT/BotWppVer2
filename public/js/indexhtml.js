@@ -138,7 +138,8 @@ async function registrarUsuario() {
     if (data.success) {
      // alert("Usuario registrado correctamente");
      alert("Usuario registrado correctamente. Ahora puedes iniciar sesión.");
-      
+      window.location.href = "index.html"; // Redirigir a la página de inicio
+      return;
     } else {
       alert("Error al registrar usuario: " + data.message);
     }
@@ -162,6 +163,7 @@ async function loginUsuario(correo, contrasena) {
 
   if (sesionActiva.loggedIn) {
     alert("Ya tienes una sesión activa. No puedes iniciar sesión de nuevo.");
+    window.location.href = "principal.html"; // Redirigir a la página principal
     return;
   }
 
@@ -242,6 +244,8 @@ async function verificarSesionActiva() {
 async function actualizarBotonesSesion() {
   const iniciarSesion = document.querySelector(".iniciarSesion");
   const cerrarSesion = document.querySelector(".cerrarSesion");
+  const Inicio = document.querySelector(".inicio");
+  const creaCuentaAni = document.querySelector(".creaCuenta");
 
   try {
     const res = await fetch("/sesion");
@@ -250,9 +254,13 @@ async function actualizarBotonesSesion() {
     if (data.loggedIn) {
       iniciarSesion.style.display = "none";
       cerrarSesion.style.display = "inline-block";
+      Inicio.style.display = "inline-block";
+      creaCuentaAni.style.display = "none";
     } else {
       iniciarSesion.style.display = "inline-block";
       cerrarSesion.style.display = "none";
+      Inicio.style.display = "none";
+      creaCuentaAni.style.display = "inline-block";
     }
   } catch (error) {
     console.error("Error al verificar sesión:", error);
@@ -295,3 +303,4 @@ function abrirRecuperarContrasena() {
       console.error(error);
     }
   });
+  
