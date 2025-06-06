@@ -17,3 +17,6 @@ Agregar boton de cancelar
 
 se tiene presente una falla en la cual si el usuario cierra la pestaña 
 no lo reenvia a la pagina gracias.html hasta que recargue la pagina.
+
+fallo en el modal login y el modal de restablecer contraseña se bugea si se cierra desde 
+restablecer contaseña 

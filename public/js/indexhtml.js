@@ -22,15 +22,15 @@ function masInfo() {
 //abrir modal login
 function toggleModal() {
   const modal = document.getElementById('loginModal');
-  if (modal.style.display === 'none')  {
-    modal.style.display = 'flex';
-  }
 
   modal.classList.toggle('hidden');
   modal.classList.toggle('flex');
-   
 
+  // Limpia errores visuales si se mostraron antes
+  const form = document.getElementById('loginForm');
+  if (form) form.reset();
 }
+
 
 document.getElementById('loginForm').addEventListener('submit', function (e) {
   e.preventDefault();
@@ -137,7 +137,7 @@ async function registrarUsuario() {
     const data = await response.json();
     if (data.success) {
      // alert("Usuario registrado correctamente");
-     alert("Usuario registrado correctamente. Ahora puedes iniciar sesión.");
+     alert("Usuario registrado correctamente. Por favor valida tu correo para inisiar sesion.");
       window.location.href = "index.html"; // Redirigir a la página de inicio
       return;
     } else {
@@ -269,14 +269,25 @@ async function actualizarBotonesSesion() {
 
 //restablecer contraseña
 function abrirRecuperarContrasena() {
-    document.getElementById("modalRecuperar").classList.remove("hidden");
-     const modal = document.getElementById('loginModal');
-     modal.style.display = 'none'; // Ocultar el modal de inicio de sesión
-  }
+  document.getElementById("modalRecuperar").classList.remove("hidden");
 
-  function cerrarRecuperarContrasena() {
-    document.getElementById("modalRecuperar").classList.add("hidden");
-  }
+  const modal = document.getElementById('loginModal');
+  modal.classList.add("hidden"); // oculta con clase
+  modal.classList.remove("flex");
+  modal.style.display = 'none';  // oculta con estilo directo
+}
+
+function cerrarRecuperarContrasena() {
+  const recuperarModal = document.getElementById("modalRecuperar");
+  const loginModal = document.getElementById("loginModal");
+
+  // Oculta el modal de recuperación
+  recuperarModal.classList.add("hidden");
+
+  // Asegura que loginModal se pueda volver a mostrar más adelante
+  loginModal.style.display = ''; // limpia el display: none
+}
+
 
   document.getElementById("formRecuperar").addEventListener("submit", async function (e) {
     e.preventDefault();

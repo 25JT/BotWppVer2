@@ -17,7 +17,9 @@ import session from 'express-session';
 import conexion from './conexion.js';
 import bcrypt from 'bcrypt';
 import cookieParser from 'cookie-parser';
-
+import { v4 as uuidv4 } from 'uuid';
+import { sendVerificationEmail } from './public/js/confiEmail.js'; // Ajusta la ruta si es necesario
+import { sendResetPasswordEmail } from './public/js/combCont.js'; // Ajusta la ruta si es necesario
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -103,26 +105,97 @@ app.post('/registro', async (req, res) => {
   const { nombre, apellido, email, contrasena } = req.body;
 
   try {
-    const hashedPassword = await bcrypt.hash(contrasena, 10); // Hashear contraseña
-
-    const sql = 'INSERT INTO usuario (contrasena, correo, nombre, apellidos) VALUES (?, ?, ?, ?)';
-    conexion.query(sql, [hashedPassword, email, nombre, apellido], (error, results) => {
-      if (error) {
-        console.error('Error al registrar usuario:', error);
-        return res.status(500).json({ error: 'Error al registrar usuario' });
+    conexion.query('SELECT id FROM usuario WHERE correo = ?', [email], async (err, results) => {
+      if (err) {
+        console.error('Error al buscar correo:', err);
+        return res.status(500).json({ error: 'Error al buscar correo' });
+      }
+      if (results.length > 0) {
+        return res.status(400).json({ error: 'El correo ya está registrado.' });
       }
 
-      if (results.affectedRows > 0) {
-        console.log("Usuario registrado correctamente: " + email);
-        res.status(200).json({ success: true, message: 'Usuario registrado correctamente' });
-      } else {
-        res.status(400).json({ success: false, message: 'Error al registrar usuario' });
-      }
+      // Genera el UUID para el usuario
+      const userId = uuidv4();
+      const hashedPassword = await bcrypt.hash(contrasena, 10);
+      const sql = 'INSERT INTO usuario (id, contrasena, correo, nombre, apellidos) VALUES (?, ?, ?, ?, ?)';
+      conexion.query(sql, [userId, hashedPassword, email, nombre, apellido], async (error, results) => {
+        if (error) {
+          console.error('Error al registrar usuario:', error);
+          return res.status(500).json({ error: 'Error al registrar usuario' });
+        }
+
+        if (results.affectedRows > 0) {
+          const token = uuidv4();
+          const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+
+          // Guarda el token en la tabla usuario_tokens
+          const tokenId = uuidv4(); // nuevo id para la fila del token
+          const tokenSql = 'INSERT INTO usuario_tokens (id, usuario_id, token, tipo, expiracion) VALUES (?, ?, ?, ?, ?)';
+          conexion.query(tokenSql, [tokenId, userId, token, 'verificacion_correo', expiresAt], async (err) => {
+
+            if (err) {
+              console.error('Error al guardar token:', err);
+              // Elimina el usuario si falla la inserción del token
+              conexion.query('DELETE FROM usuario WHERE id = ?', [userId]);
+              return res.status(500).json({ error: 'Error al guardar token' });
+            }
+
+            // Envía el correo de verificación
+            try {
+              await sendVerificationEmail(email, token);
+              res.status(200).json({ success: true, message: 'Usuario registrado. Revisa tu correo para verificar tu cuenta.' });
+            } catch (mailErr) {
+              console.error('Error al enviar correo:', mailErr);
+              // Elimina el usuario y el token si falla el envío del correo
+              conexion.query('DELETE FROM usuario_tokens WHERE usuario_id = ?', [userId]);
+              conexion.query('DELETE FROM usuario WHERE id = ?', [userId]);
+              res.status(500).json({ error: 'Error al enviar correo de verificación' });
+            }
+          });
+        } else {
+          res.status(400).json({ success: false, message: 'Error al registrar usuario' });
+        }
+      });
     });
   } catch (error) {
     console.error('Error al hashear contraseña:', error);
     res.status(500).json({ error: 'Error en el servidor' });
   }
+});
+//validar correo 
+
+app.get('/verify-email', (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).send('Token inválido');
+
+  // Busca el token, verifica que no haya expirado y revisa si ya fue usado
+  const sql = `
+    SELECT ut.usuario_id, u.correo, ut.usado FROM usuario_tokens ut
+    JOIN usuario u ON ut.usuario_id = u.id
+    WHERE ut.token = ? AND ut.tipo = 'verificacion_correo' AND ut.expiracion > NOW()
+  `;
+  conexion.query(sql, [token], (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(400).send('Token inválido o expirado');
+    }
+    const userId = results[0].usuario_id;
+    const usado = results[0].usado;
+
+    if (usado) {
+      // Si ya fue usado, muestra mensaje amigable
+      return res.send('Este enlace ya fue utilizado. Ya puedes iniciar sesión o cerrar esta pestaña.');
+    }
+
+    // Marca el usuario como verificado y el token como usado
+    conexion.query('UPDATE usuario SET verificado = 1 WHERE id = ?', [userId], (err2) => {
+      if (err2) return res.status(500).send('Error al verificar usuario');
+
+      conexion.query('UPDATE usuario_tokens SET usado = 1 WHERE token = ?', [token], (err3) => {
+        if (err3) return res.status(500).send('Error al actualizar token');
+        res.send('¡Correo verificado correctamente! Ya puedes iniciar sesión o cerrar esta pestaña.');
+      });
+    });
+  });
 });
 
 
@@ -142,6 +215,11 @@ app.post("/login", (req, res) => {
 
     const usuario = results[0];
 
+    // NUEVO: Verifica si el usuario está verificado
+    if (!usuario.verificado) {
+      return res.status(403).json({ success: false, message: "Debes verificar tu correo antes de iniciar sesión." });
+    }
+
     const passwordMatch = await bcrypt.compare(contrasena, usuario.contrasena);
     if (!passwordMatch) {
       return res.status(401).json({ success: false, message: "Credenciales incorrectas" });
@@ -150,7 +228,7 @@ app.post("/login", (req, res) => {
     req.session.userId = usuario.id;
     req.session.usuario = usuario;
 
-    res.status(200).json({ success: true, message: "Inicio de sesión exitoso", userId: usuario.id, correo: usuario.correo, });
+    res.status(200).json({ success: true, message: "Inicio de sesión exitoso", userId: usuario.id, correo: usuario.correo });
   });
 });
 
@@ -178,11 +256,12 @@ app.get('/sesion', (req, res) => {
   }
 });
 
+
 //restablecer la contraseña
 app.post("/recuperar", (req, res) => {
   const { correo } = req.body;
 
-  conexion.query("SELECT * FROM usuario WHERE correo = ?", [correo], (err, results) => {
+  conexion.query("SELECT id FROM usuario WHERE correo = ?", [correo], async (err, results) => {
     if (err) {
       console.error("Error al buscar el usuario:", err);
       return res.status(500).json({ success: false, message: "Error del servidor" });
@@ -192,13 +271,66 @@ app.post("/recuperar", (req, res) => {
       return res.status(404).json({ success: false, message: "Correo no registrado" });
     }
 
-    // Aquí normalmente se enviaría un correo con un enlace para resetear la contraseña
-    // Por ahora, podemos simularlo con un mensaje
-    console.log(`Instrucciones enviadas al correo: ${correo}`);
+    const userId = results[0].id;
+    const token = uuidv4();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
 
-    res.status(200).json({ success: true, message: "Correo de recuperación enviado" });
+    // Guarda el token en la tabla usuario_tokens
+    const tokenId = uuidv4(); // Genera un id único para el token
+    const tokenSql = 'INSERT INTO usuario_tokens (id, usuario_id, token, tipo, expiracion) VALUES (?, ?, ?, ?, ?)';
+    conexion.query(tokenSql, [tokenId, userId, token, 'reset_pass', expiresAt], async (err2) => {
+      if (err2) {
+        console.error('Error al guardar token de recuperación:', err2);
+        return res.status(500).json({ success: false, message: 'Error al generar enlace de recuperación' });
+      }
+
+      try {
+        await sendResetPasswordEmail(correo, token);
+        res.status(200).json({ success: true, message: "Correo de recuperación enviado" });
+      } catch (mailErr) {
+        console.error('Error al enviar correo de recuperación:', mailErr);
+        res.status(500).json({ success: false, message: 'Error al enviar correo de recuperación' });
+      }
+    });
   });
 });
+
+app.post('/reset-password', async (req, res) => {
+  const { token, nuevaContrasena } = req.body;
+
+  // Busca el token válido
+  const sql = `
+    SELECT usuario_id, usado FROM usuario_tokens
+    WHERE token = ? AND tipo = 'reset_pass' AND expiracion > NOW()
+  `;
+  conexion.query(sql, [token], async (err, results) => {
+    if (err || results.length === 0) {
+      console.log(err);
+
+      return res.status(400).json({ success: false, message: 'Token inválido o expirado' });
+    }
+    const userId = results[0].usuario_id;
+    const usado = results[0].usado;
+
+    if (usado) {
+      return res.status(400).json({ success: false, message: 'Este enlace ya fue utilizado.' });
+    }
+
+    // Cifra la nueva contraseña
+    const hashedPassword = await bcrypt.hash(nuevaContrasena, 10);
+
+    // Actualiza la contraseña y marca el token como usado
+    conexion.query('UPDATE usuario SET contrasena = ? WHERE id = ?', [hashedPassword, userId], (err2) => {
+      if (err2) return res.status(500).json({ success: false, message: 'Error al actualizar contraseña' });
+
+      conexion.query('UPDATE usuario_tokens SET usado = 1 WHERE token = ?', [token], (err3) => {
+        if (err3) return res.status(500).json({ success: false, message: 'Error al actualizar token' });
+        res.json({ success: true, message: 'Contraseña actualizada correctamente' });
+      });
+    });
+  });
+});
+
 
 app.get('/estado-envio', (req, res) => {
   const userId = req.session?.userId;
@@ -234,61 +366,61 @@ io.on('connection', async (socket) => {
   if (sessions.has(userId)) {
     const { sock } = sessions.get(userId);
 
-  // Si el socket sigue conectado a WhatsApp, volvemos a enviar mensajes o reestablecemos estado
-  if (sock?.user && sock?.authState) {
+    // Si el socket sigue conectado a WhatsApp, volvemos a enviar mensajes o reestablecemos estado
+    if (sock?.user && sock?.authState) {
+      const datos = datosUsuarios.get(userId);
+      if (datos?.enviado) {
+        // Ya envió, solo muestra el resumen y redirige
+        socket.emit('done', {
+          enviados: datos.numeros || [],
+          fallidos: [], // Puedes guardar los fallidos si quieres
+          resumen: datos.resumen || ''
+        });
+        socket.emit('redirect', '/gracias.html');
+        return;
+      }
+      console.log(`🔁 Reconectando sesión de WhatsApp existente para usuario ${userId}`);
+      socket.emit('reconexionExitosa', 'Reconexión exitosa a WhatsApp');
+      await delay(1000); // Evita concurrencia
+      await enviarMensajes(sock, socket, userId);
+      return;
+    }
+  }
+
+  socket.on('ready', async () => {
     const datos = datosUsuarios.get(userId);
+
+
+    // Si hay pausa activa
+    if (datos?.pausa) {
+      const ahora = Date.now();
+      const tiempoTranscurrido = Math.floor((ahora - datos.pausa.inicio) / 1000);
+      const tiempoRestante = datos.pausa.duracion - tiempoTranscurrido;
+
+      if (tiempoRestante > 0) {
+        socket.emit('pausaIniciada', {
+          mensaje: datos.pausa.mensaje,
+          tiempo: tiempoRestante,
+        });
+        // Opcional: puedes iniciar un temporizador en el cliente para mostrar la cuenta regresiva
+        return;
+      } else {
+        // Si ya pasó la pausa, elimínala
+        delete datos.pausa;
+        datosUsuarios.set(userId, datos);
+      }
+    }
+
     if (datos?.enviado) {
-      // Ya envió, solo muestra el resumen y redirige
+      console.log(`⚠️ Usuario ${userId} ya completó el envío, bloqueando reenvío.`);
       socket.emit('done', {
         enviados: datos.numeros || [],
-        fallidos: [], // Puedes guardar los fallidos si quieres
+        fallidos: [], // Si quieres puedes guardar los fallidos también
         resumen: datos.resumen || ''
       });
       socket.emit('redirect', '/gracias.html');
       return;
     }
-    console.log(`🔁 Reconectando sesión de WhatsApp existente para usuario ${userId}`);
-    socket.emit('reconexionExitosa', 'Reconexión exitosa a WhatsApp');
-    await delay(1000); // Evita concurrencia
-    await enviarMensajes(sock, socket, userId);
-    return;
-  }
-}
-
-  socket.on('ready', async () => {
-  const datos = datosUsuarios.get(userId);
-    
-
-  // Si hay pausa activa
-  if (datos?.pausa) {
-    const ahora = Date.now();
-    const tiempoTranscurrido = Math.floor((ahora - datos.pausa.inicio) / 1000);
-    const tiempoRestante = datos.pausa.duracion - tiempoTranscurrido;
-
-    if (tiempoRestante > 0) {
-      socket.emit('pausaIniciada', {
-        mensaje: datos.pausa.mensaje,
-        tiempo: tiempoRestante,
-      });
-      // Opcional: puedes iniciar un temporizador en el cliente para mostrar la cuenta regresiva
-      return;
-    } else {
-      // Si ya pasó la pausa, elimínala
-      delete datos.pausa;
-      datosUsuarios.set(userId, datos);
-    }
-  }
-
-  if (datos?.enviado) {
-    console.log(`⚠️ Usuario ${userId} ya completó el envío, bloqueando reenvío.`);
-    socket.emit('done', {
-      enviados: datos.numeros || [],
-      fallidos: [], // Si quieres puedes guardar los fallidos también
-      resumen: datos.resumen || ''
-    });
-    socket.emit('redirect', '/gracias.html');
-    return;
-  }
     console.log(`✅ Usuario ${userId} listo`);
 
     if (sessions.has(userId)) {
@@ -372,242 +504,242 @@ io.on('connection', async (socket) => {
   async function enviarMensajes(sock, socket, userId) {
     const datos = datosUsuarios.get(userId);
 
-  // --- NUEVO: Si hay pausa activa, envía el tiempo restante y retorna ---
-  if (datos?.pausa) {
-    const ahora = Date.now();
-    const tiempoTranscurrido = Math.floor((ahora - datos.pausa.inicio) / 1000);
-    const tiempoRestante = datos.pausa.duracion - tiempoTranscurrido;
+    // --- NUEVO: Si hay pausa activa, envía el tiempo restante y retorna ---
+    if (datos?.pausa) {
+      const ahora = Date.now();
+      const tiempoTranscurrido = Math.floor((ahora - datos.pausa.inicio) / 1000);
+      const tiempoRestante = datos.pausa.duracion - tiempoTranscurrido;
 
-    if (tiempoRestante > 0) {
-      socket.emit('pausaIniciada', {
-        mensaje: datos.pausa.mensaje,
-        tiempo: tiempoRestante,
-      });
-      return; // No sigas con el envío hasta que termine la pausa
-    } else {
-      // Si ya pasó la pausa, elimínala
-      delete datos.pausa;
-      datosUsuarios.set(userId, datos);
+      if (tiempoRestante > 0) {
+        socket.emit('pausaIniciada', {
+          mensaje: datos.pausa.mensaje,
+          tiempo: tiempoRestante,
+        });
+        return; // No sigas con el envío hasta que termine la pausa
+      } else {
+        // Si ya pasó la pausa, elimínala
+        delete datos.pausa;
+        datosUsuarios.set(userId, datos);
+      }
     }
-  }
 
-  // --- Luego sigue tu lógica normal ---
-  socket.emit('enviando');
-  if (sendingQueue.get(userId)) {
-    console.log(`⏳ Usuario ${userId} ya está enviando mensajes`);
-    return;
-  }
-
-  sendingQueue.set(userId, true);
-
-  
-  if (!datos || !datos.numeros || !datos.mensaje) {
-    console.warn(`⚠️ Usuario ${userId} aún no ha definido números o mensaje`);
-    sendingQueue.set(userId, false);
-    return;
-  }
-
-  const { numeros, mensaje } = datos;
-  const enviados = [];
-  const fallidos = [];
-
-  const delayAleatorio = () => delay(Math.floor(Math.random() * (10000 - 6000 + 1)) + 4000);
-
-  const saludos = [
-    "Hola 👋", "¡Saludos!", "Buenas, ¿cómo estás?", "Un gusto saludarte", "Hola, ¿cómo te va?",
-    "¡Qué tal!", "Muy buenas 🌞", "¡Buen día!", "Saludos cordiales 👋", "Hola, espero que estés bien",
-    "¡Hola! Te quiero compartir algo interesante", "Hola 👋 ¿cómo va todo?",
-    "¡Hola! Espero que tengas un gran día", "¡Hey! ¿Cómo andas?", "Hola, ¡bienvenido!",
-    "Hola, quería contarte algo 🤗",
-  ];
-
-  const firmas = [
-    "Atentamente", "Gracias por tu atención", "Estamos para ayudarte", "Cualquier duda, escríbenos",
-    "Saludos cordiales", "Con gusto te apoyamos", "¡Te esperamos!", "Gracias por tu tiempo 🙌",
-    "Esperamos tu respuesta", "Con aprecio", "Con estima", "Seguimos en contacto",
-    "Gracias por confiar en nosotros", "Aquí estamos para lo que necesites", "¡Éxitos! 💪",
-  ];
-
-  const sinonimos = {
-    "ganar dinero": ["generar ingresos", "obtener ganancias", "tener ingresos extra", "producir dinero", "recibir pagos", "incrementar tus finanzas"],
-    "ventas": ["comercialización", "distribución", "promoción de productos", "negociación", "transacciones", "ofrecer productos"],
-    "negocio": ["emprendimiento", "proyecto", "actividad comercial", "iniciativa personal", "microempresa"],
-    "premios": ["beneficios", "recompensas", "incentivos", "bonificaciones", "ventajas"],
-    "entrega": ["envío", "despacho", "distribución", "remisión", "traslado de productos"],
-    "clientes": ["compradores", "usuarios", "personas interesadas", "público", "contactos"],
-    "producto": ["artículo", "ítem", "mercancía", "bien", "objeto"],
-    "dinero": ["plata", "efectivo", "ingresos", "capital", "fondos", "recursos"],
-    "pedido": ["compra", "solicitud", "encargo", "orden"],
-    "catálogo": ["colección", "listado de productos", "muestrario", "inventario"],
-    "beneficios": ["ventajas", "atributos positivos", "ganancias", "recompensas"],
-    "oportunidad": ["posibilidad", "ventana de crecimiento", "propuesta", "alternativa"],
-  };
-
-function maquillarMensajeLibre(texto) {
-  const extras = [
-    "Si tienes dudas, estoy por aquí 👀",
-    "Te puedo ayudar cuando quieras ✌️",
-    "Sin compromiso, solo quiero compartirlo contigo 😊",
-    "Esta info puede ser útil para ti 😉",
-    "Es solo una idea, tú decides 💭",
-      "Avísame si te interesa.",
-       "¡Gracias por tu tiempo!",
-  "Quedo atento a tus comentarios.",
-  ];
-
-  const signosFinales = ['!', '!!', '.', '...'];
-  
-
-  let resultado = texto;
-
-  // Reemplazos con sinónimos
-for (const [clave, variantes] of Object.entries(sinonimos)) {
-  const regex = new RegExp(`\\b${clave}\\b`, 'gi');
-
-  // Generar una probabilidad aleatoria entre 10% y 50%
-  const probabilidadDeReemplazo = Math.random() * (0.4 - 0.0) + 0.1;
-
-  if (regex.test(resultado) && Math.random() < probabilidadDeReemplazo) {
-    resultado = resultado.replace(regex, () => {
-      return variantes[Math.floor(Math.random() * variantes.length)];
-    });
-  }
-}
-
-  // Agrega frase extra al final con probabilidad
-  if (Math.random() < 0.4) {
-    resultado += `\n\n${extras[Math.floor(Math.random() * extras.length)]}`;
-  }
-
-  // Saludo y firma aleatorios
-  let saludo = saludos[Math.floor(Math.random() * saludos.length)];
-  let firma = firmas[Math.floor(Math.random() * firmas.length)];
-
-  // Variación de signos de puntuación
-  saludo = saludo.replace(/!$/, signosFinales[Math.floor(Math.random() * signosFinales.length)]);
-  firma = firma.replace(/!$/, signosFinales[Math.floor(Math.random() * signosFinales.length)]);
-
-  // Estructura fija: saludo, cuerpo y firma
-  return `${saludo}\n\n${resultado}\n\n${firma}`;
-}
-
-
-  // Devuelve un número aleatorio entre min y max (inclusive)
-  function randomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  // Mezcla el array de números
-  function mezclarArray(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+    // --- Luego sigue tu lógica normal ---
+    socket.emit('enviando');
+    if (sendingQueue.get(userId)) {
+      console.log(`⏳ Usuario ${userId} ya está enviando mensajes`);
+      return;
     }
-    return arr;
-  }
 
-  // Divide en lotes de tamaño aleatorio entre 10 y 20
-  function dividirLotesAleatorios(arr) {
-    const mezclado = mezclarArray([...arr]);
-    const lotes = [];
-    let i = 0;
-    while (i < mezclado.length) {
-      const tamLote = randomInt(10, 20);
-      lotes.push(mezclado.slice(i, i + tamLote));
-      i += tamLote;
-    }
-    return lotes;
-  }
+    sendingQueue.set(userId, true);
 
-  const lotes = dividirLotesAleatorios(numeros);
 
-  for (const [i, lote] of lotes.entries()) {
-    // Verifica si fue cancelado antes de cada lote
-    if (datosUsuarios.get(userId)?.cancelado) {
-      console.log(`🚫 Envío cancelado por el usuario ${userId}`);
-      socket.emit('envio-cancelado');
+    if (!datos || !datos.numeros || !datos.mensaje) {
+      console.warn(`⚠️ Usuario ${userId} aún no ha definido números o mensaje`);
       sendingQueue.set(userId, false);
       return;
     }
-    console.log(`🚀 Enviando lote ${i + 1}/${lotes.length} (Usuario ${userId})`);
 
-    for (const numero of lote) {
-      // Verifica si fue cancelado antes de cada número
+    const { numeros, mensaje } = datos;
+    const enviados = [];
+    const fallidos = [];
+
+    const delayAleatorio = () => delay(Math.floor(Math.random() * (10000 - 6000 + 1)) + 4000);
+
+    const saludos = [
+      "Hola 👋", "¡Saludos!", "Buenas, ¿cómo estás?", "Un gusto saludarte", "Hola, ¿cómo te va?",
+      "¡Qué tal!", "Muy buenas 🌞", "¡Buen día!", "Saludos cordiales 👋", "Hola, espero que estés bien",
+      "¡Hola! Te quiero compartir algo interesante", "Hola 👋 ¿cómo va todo?",
+      "¡Hola! Espero que tengas un gran día", "¡Hey! ¿Cómo andas?", "Hola, ¡bienvenido!",
+      "Hola, quería contarte algo 🤗",
+    ];
+
+    const firmas = [
+      "Atentamente", "Gracias por tu atención", "Estamos para ayudarte", "Cualquier duda, escríbenos",
+      "Saludos cordiales", "Con gusto te apoyamos", "¡Te esperamos!", "Gracias por tu tiempo 🙌",
+      "Esperamos tu respuesta", "Con aprecio", "Con estima", "Seguimos en contacto",
+      "Gracias por confiar en nosotros", "Aquí estamos para lo que necesites", "¡Éxitos! 💪",
+    ];
+
+    const sinonimos = {
+      "ganar dinero": ["generar ingresos", "obtener ganancias", "tener ingresos extra", "producir dinero", "recibir pagos", "incrementar tus finanzas"],
+      "ventas": ["comercialización", "distribución", "promoción de productos", "negociación", "transacciones", "ofrecer productos"],
+      "negocio": ["emprendimiento", "proyecto", "actividad comercial", "iniciativa personal", "microempresa"],
+      "premios": ["beneficios", "recompensas", "incentivos", "bonificaciones", "ventajas"],
+      "entrega": ["envío", "despacho", "distribución", "remisión", "traslado de productos"],
+      "clientes": ["compradores", "usuarios", "personas interesadas", "público", "contactos"],
+      "producto": ["artículo", "ítem", "mercancía", "bien", "objeto"],
+      "dinero": ["plata", "efectivo", "ingresos", "capital", "fondos", "recursos"],
+      "pedido": ["compra", "solicitud", "encargo", "orden"],
+      "catálogo": ["colección", "listado de productos", "muestrario", "inventario"],
+      "beneficios": ["ventajas", "atributos positivos", "ganancias", "recompensas"],
+      "oportunidad": ["posibilidad", "ventana de crecimiento", "propuesta", "alternativa"],
+    };
+
+    function maquillarMensajeLibre(texto) {
+      const extras = [
+        "Si tienes dudas, estoy por aquí 👀",
+        "Te puedo ayudar cuando quieras ✌️",
+        "Sin compromiso, solo quiero compartirlo contigo 😊",
+        "Esta info puede ser útil para ti 😉",
+        "Es solo una idea, tú decides 💭",
+        "Avísame si te interesa.",
+        "¡Gracias por tu tiempo!",
+        "Quedo atento a tus comentarios.",
+      ];
+
+      const signosFinales = ['!', '!!', '.', '...'];
+
+
+      let resultado = texto;
+
+      // Reemplazos con sinónimos
+      for (const [clave, variantes] of Object.entries(sinonimos)) {
+        const regex = new RegExp(`\\b${clave}\\b`, 'gi');
+
+        // Generar una probabilidad aleatoria entre 10% y 50%
+        const probabilidadDeReemplazo = Math.random() * (0.4 - 0.0) + 0.1;
+
+        if (regex.test(resultado) && Math.random() < probabilidadDeReemplazo) {
+          resultado = resultado.replace(regex, () => {
+            return variantes[Math.floor(Math.random() * variantes.length)];
+          });
+        }
+      }
+
+      // Agrega frase extra al final con probabilidad
+      if (Math.random() < 0.4) {
+        resultado += `\n\n${extras[Math.floor(Math.random() * extras.length)]}`;
+      }
+
+      // Saludo y firma aleatorios
+      let saludo = saludos[Math.floor(Math.random() * saludos.length)];
+      let firma = firmas[Math.floor(Math.random() * firmas.length)];
+
+      // Variación de signos de puntuación
+      saludo = saludo.replace(/!$/, signosFinales[Math.floor(Math.random() * signosFinales.length)]);
+      firma = firma.replace(/!$/, signosFinales[Math.floor(Math.random() * signosFinales.length)]);
+
+      // Estructura fija: saludo, cuerpo y firma
+      return `${saludo}\n\n${resultado}\n\n${firma}`;
+    }
+
+
+    // Devuelve un número aleatorio entre min y max (inclusive)
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Mezcla el array de números
+    function mezclarArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Divide en lotes de tamaño aleatorio entre 10 y 20
+    function dividirLotesAleatorios(arr) {
+      const mezclado = mezclarArray([...arr]);
+      const lotes = [];
+      let i = 0;
+      while (i < mezclado.length) {
+        const tamLote = randomInt(10, 20);
+        lotes.push(mezclado.slice(i, i + tamLote));
+        i += tamLote;
+      }
+      return lotes;
+    }
+
+    const lotes = dividirLotesAleatorios(numeros);
+
+    for (const [i, lote] of lotes.entries()) {
+      // Verifica si fue cancelado antes de cada lote
       if (datosUsuarios.get(userId)?.cancelado) {
         console.log(`🚫 Envío cancelado por el usuario ${userId}`);
         socket.emit('envio-cancelado');
         sendingQueue.set(userId, false);
         return;
       }
-      await delayAleatorio();
+      console.log(`🚀 Enviando lote ${i + 1}/${lotes.length} (Usuario ${userId})`);
 
-      const mensajeFinal = maquillarMensajeLibre(mensaje);
-      const jid = `57${numero}@s.whatsapp.net`;
+      for (const numero of lote) {
+        // Verifica si fue cancelado antes de cada número
+        if (datosUsuarios.get(userId)?.cancelado) {
+          console.log(`🚫 Envío cancelado por el usuario ${userId}`);
+          socket.emit('envio-cancelado');
+          sendingQueue.set(userId, false);
+          return;
+        }
+        await delayAleatorio();
 
-      try {
-        const [result] = await sock.onWhatsApp(numero);
-        if (!result?.exists) {
-          console.warn(`⚠️ Número ${numero} no existe`);
-          fallidos.push({ numero, error: 'No existe' });
-          continue;
+        const mensajeFinal = maquillarMensajeLibre(mensaje);
+        const jid = `57${numero}@s.whatsapp.net`;
+
+        try {
+          const [result] = await sock.onWhatsApp(numero);
+          if (!result?.exists) {
+            console.warn(`⚠️ Número ${numero} no existe`);
+            fallidos.push({ numero, error: 'No existe' });
+            continue;
+          }
+
+          await sock.sendMessage(jid, { text: mensajeFinal });
+          enviados.push(numero);
+          console.log(`📩 Enviado a ${numero}`);
+        } catch (err) {
+          fallidos.push({ numero, error: err.message });
+          console.error(`❌ Error en ${numero}: ${err.message}`);
+        }
+      }
+
+      if (i < lotes.length - 1) {
+        const pausaMs = randomInt(5 * 60 * 1000, 10 * 60 * 1000);
+        const pausaSegundos = Math.floor(pausaMs / 1000);
+        const pausaMinutos = Math.floor(pausaSegundos / 60);
+
+        const mensajePausa = `⏳ Pausa de ${pausaMinutos} minutos para evitar bloqueos. En breve se continuará...`;
+        console.log(`🛑 ${mensajePausa}`);
+
+        // Guarda la pausa en datosUsuarios
+        if (datos) {
+          datos.pausa = {
+            inicio: Date.now(),
+            duracion: pausaSegundos,
+            mensaje: mensajePausa
+          };
+          datosUsuarios.set(userId, datos);
         }
 
-        await sock.sendMessage(jid, { text: mensajeFinal });
-        enviados.push(numero);
-        console.log(`📩 Enviado a ${numero}`);
-      } catch (err) {
-        fallidos.push({ numero, error: err.message });
-        console.error(`❌ Error en ${numero}: ${err.message}`);
+        socket.emit('pausaIniciada', {
+          mensaje: mensajePausa,
+          tiempo: pausaSegundos,
+        });
+
+        for (let s = pausaSegundos; s > 0; s--) {
+          socket.emit('pausaTiempo', s);
+          await delay(1000);
+        }
+
+        // Elimina la pausa al terminar
+        if (datos) {
+          delete datos.pausa;
+          datosUsuarios.set(userId, datos);
+        }
+
+        socket.emit('pausaFinalizada', '✅ Continuando con el siguiente lote...');
       }
     }
 
-    if (i < lotes.length - 1) {
-      const pausaMs = randomInt(5 * 60 * 1000, 10 * 60 * 1000);
-      const pausaSegundos = Math.floor(pausaMs / 1000);
-      const pausaMinutos = Math.floor(pausaSegundos / 60);
-
-      const mensajePausa = `⏳ Pausa de ${pausaMinutos} minutos para evitar bloqueos. En breve se continuará...`;
-      console.log(`🛑 ${mensajePausa}`);
-
-      // Guarda la pausa en datosUsuarios
-      if (datos) {
-        datos.pausa = {
-          inicio: Date.now(),
-          duracion: pausaSegundos,
-          mensaje: mensajePausa
-        };
-        datosUsuarios.set(userId, datos);
-      }
-
-      socket.emit('pausaIniciada', {
-        mensaje: mensajePausa,
-        tiempo: pausaSegundos,
-      });
-
-      for (let s = pausaSegundos; s > 0; s--) {
-        socket.emit('pausaTiempo', s);
-        await delay(1000);
-      }
-
-      // Elimina la pausa al terminar
-      if (datos) {
-        delete datos.pausa;
-        datosUsuarios.set(userId, datos);
-      }
-
-      socket.emit('pausaFinalizada', '✅ Continuando con el siguiente lote...');
-    }
-  }
-
-  
 
 
-  socket.emit('done', {
-    enviados,
-    fallidos: fallidos.map(f => f.numero)
-  });
 
-  const resumen = `
+    socket.emit('done', {
+      enviados,
+      fallidos: fallidos.map(f => f.numero)
+    });
+
+    const resumen = `
 ✅ *Resumen de envío de mensajes:*
 
 📬 Enviados: ${enviados.length}
@@ -617,37 +749,37 @@ ${enviados.length > 0 ? `📱 Números enviados:\n${enviados.join(', ')}` : ''}
 ${fallidos.length > 0 ? `🚫 Números fallidos:\n${fallidos.map(f => f.numero).join(', ')}` : ''}
 `.trim();
 
-  if (datos) {
-    datos.enviado = true;
-     datos.resumen = resumen;
-    datosUsuarios.set(userId, datos);
+    if (datos) {
+      datos.enviado = true;
+      datos.resumen = resumen;
+      datosUsuarios.set(userId, datos);
+    }
+
+    // Enviar resumen al número del usuario autenticado
+    try {
+      const jidUsuario = sock.user?.id; // ej: 573001112222@s.whatsapp.net
+
+      if (jidUsuario) {
+        await sock.sendMessage(jidUsuario, { text: resumen });
+        console.log(`📤 Resumen enviado al usuario ${userId}`);
+      } else {
+        console.warn(`⚠️ No se pudo determinar el JID del usuario ${userId}`);
+      }
+    } catch (err) {
+      console.error(`❌ Error al enviar resumen al usuario ${userId}: ${err.message}`);
+    }
+
+
+    // Emitimos en el frontend y limpiamos la cola
+    socket.emit('done', {
+      enviados,
+      fallidos: fallidos.map(f => f.numero)
+    });
+    sendingQueue.set(userId, false);
+    socket.emit('redirect', '/gracias.html');
   }
 
-// Enviar resumen al número del usuario autenticado
-try {
-  const jidUsuario = sock.user?.id; // ej: 573001112222@s.whatsapp.net
-  
-  if (jidUsuario) {
-    await sock.sendMessage(jidUsuario, { text: resumen });
-    console.log(`📤 Resumen enviado al usuario ${userId}`);
-  } else {
-    console.warn(`⚠️ No se pudo determinar el JID del usuario ${userId}`);
-  }
-} catch (err) {
-  console.error(`❌ Error al enviar resumen al usuario ${userId}: ${err.message}`);
-}
-  
-
-// Emitimos en el frontend y limpiamos la cola
-socket.emit('done', {
-  enviados,
-  fallidos: fallidos.map(f => f.numero)
 });
-sendingQueue.set(userId, false);
-socket.emit('redirect', '/gracias.html');
-}
-
-}); 
 app.post('/cancelar-envio', (req, res) => {
   const userId = req.session?.userId;
   if (!userId) return res.status(401).json({ error: 'No autenticado' });
@@ -659,6 +791,8 @@ app.post('/cancelar-envio', (req, res) => {
   }
   res.json({ ok: true });
 });
+
+
 
 const PORT = 3000;
 server.listen(PORT, () => {

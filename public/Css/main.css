@@ -297,7 +297,10 @@ button:hover {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  box-shadow: none;
+   border-radius: 16px;
 }
+
 
 .btn-cerrar-recuperar {
   margin-top: 12px;
