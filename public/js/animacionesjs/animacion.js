@@ -332,7 +332,7 @@ gsap.to(".anifooter", {
         start: "top 95%",
         end: "top 85%",
         scrub: true,
-        markers:true,
+        markers:false,
   
         scroller: document.body
     }

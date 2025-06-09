@@ -14,7 +14,7 @@ export const sendVerificationEmail = async (to, token) => {
   const verificationLink = `http://localhost:3000/confiEmail.html?token=${token}`;
 
   await transporter.sendMail({
-    from: `"TuApp 👋" <${process.env.EMAIL_USER}>`,
+    from: `"BotWii 👋" <${process.env.EMAIL_USER}>`,
     to,
     subject: 'Verifica tu correo electrónico',
     html: `

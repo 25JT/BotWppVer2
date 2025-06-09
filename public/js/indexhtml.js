@@ -2,6 +2,51 @@
 verificarSesionActiva();
 actualizarBotonesSesion();
 
+function abrirModalContacto() {
+  document.getElementById('modalContacto').classList.remove('hidden');
+  document.getElementById('modalContacto').classList.add('flex');
+}
+function cerrarModalContacto() {
+  document.getElementById('modalContacto').classList.add('hidden');
+  document.getElementById('modalContacto').classList.remove('flex');
+}
+
+// Enviar formulario de contacto
+document.addEventListener("DOMContentLoaded", () => {
+  const formContacto = document.getElementById("formContacto");
+  if (formContacto) {
+    formContacto.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById("nombreContacto").value;
+      const email = document.getElementById("emailContacto").value;
+      const mensaje = document.getElementById("mensajeContacto").value;
+ 
+
+      try {
+        const res = await fetch("/contacto", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nombre, email, mensaje })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("Mensaje enviado correctamente.");
+               document.getElementById("nombreContacto").value = "";
+      document.getElementById("emailContacto").value = "";
+      document.getElementById("mensajeContacto").value = "";
+          cerrarModalContacto();
+        } else {
+          alert("Error al enviar mensaje: " + data.message);
+        }
+      } catch (err) {
+        alert("Error al enviar mensaje.")
+     
+        ;
+      }
+    });
+  }
+});
+
 //animacion de los botones
 function creaCuentaAni() {
   gsap.to(window, {

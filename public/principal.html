@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Principal BOTWII</title>
+    <title>Principal BotWii</title>
 
     <link rel="stylesheet" href="/Css/main.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -52,7 +52,7 @@
 
                     <!-- Contacto e Inicio sesión -->
                     <div class="col-12 col-md-4 text-center text-md-end">
-                        <h2 class="d-block d-md-inline me-md-2 mb-2 mb-md-0 textnav ">Contacto</h2>
+                        <h2 class="d-block d-md-inline me-md-2 mb-2 mb-md-0 textnav " onclick="abrirModalContacto()">Contacto</h2>
 
                         <a onclick="cerrarSesion()" style=" cursor: pointer;  color: black;" class="cerrarSesion">
                             <h2 class="d-block d-md-inline textnav">Cerrar sesión</h2>
@@ -184,6 +184,30 @@
         </div>
     </section>
 
+    <!-- Modal de contacto -->
+<div id="modalContacto" class="modal-overlay hidden">
+  <div class="modal-box">
+    <button onclick="cerrarModalContacto()" class="close-button" style="box-shadow: none;">&times;</button>
+    <h2>Contacto</h2>
+    <form id="formContacto">
+      <div class="form-group">
+        <label for="nombreContacto">Nombre</label>
+        <input type="text" id="nombreContacto" required>
+      </div>
+      <div class="form-group">
+        <label for="emailContacto">Correo</label>
+        <input type="email" id="emailContacto" required>
+      </div>
+      <div class="form-group">
+        <label for="mensajeContacto">Mensaje</label>
+        <textarea id="mensajeContacto" rows="4" required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary" style="box-shadow: none;">Enviar</button>
+    </form>
+  </div>
+</div>
+
+
 
 <footer class="container-fluid  py-4 anifooter">
   <div class="container text-center text-lg-start">
@@ -202,7 +226,7 @@
       <!-- Columna 3: Contacto -->
       <div class="col-12 col-md-4 text-center text-md-end">
         <h1>CONTACTO</h1>
-        <p class="mb-0">bot@gmail.com</p>
+        <p class="mb-0">botwiioficial@gmail.com</p>
       </div>
 
     </div>

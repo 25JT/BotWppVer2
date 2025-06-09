@@ -7,6 +7,7 @@ window.addEventListener('DOMContentLoaded', () => {
         resumen.innerText = '❗ No se encontraron resultados de envío.';
         return;
     }
+    
 
     const { enviados, fallidos } = JSON.parse(stored);
 

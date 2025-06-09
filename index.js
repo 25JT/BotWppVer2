@@ -7,6 +7,7 @@ import {
   DisconnectReason,
   fetchLatestBaileysVersion
 } from 'baileys';
+import nodemailer from 'nodemailer'; 
 import qrcode from 'qrcode';
 import { Boom } from '@hapi/boom';
 import fs from 'fs/promises';
@@ -343,6 +344,37 @@ app.get('/estado-envio', (req, res) => {
   return res.json({ envio: 'libre' });
 });
 
+//contacto 
+app.post('/contacto', async (req, res) => {
+  const { nombre, email, mensaje } = req.body;
+
+  if (!nombre || !email || !mensaje) {
+    return res.json({ success: false, message: "Todos los campos son obligatorios." });
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS // Debes tener EMAIL_PASS en tu .env
+      }
+    });
+
+    await transporter.sendMail({
+      from: `"Contacto BotWii" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER,
+      subject: `Nuevo mensaje de contacto ${nombre}`,
+      text: `Nombre: ${nombre}\nCorreo: ${email}\nMensaje:\n${mensaje}`
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.log(err);
+    
+    res.json({ success: false, message: "No se pudo enviar el mensaje." });
+  }
+});
 
 //bot qr envio de mensajes
 const datosUsuarios = new Map(); // userId => { numeros, mensaje }

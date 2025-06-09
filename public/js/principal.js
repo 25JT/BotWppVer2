@@ -1,6 +1,9 @@
 
 verificarSesionActiva();
 verificarEnvioActivo();
+
+
+
 const usuarioId = sessionStorage.getItem('usuarioId');
 console.log("Usuario ID desde sessionStorage:", usuarioId);
 
