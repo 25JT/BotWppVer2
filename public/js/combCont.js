@@ -11,7 +11,8 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendResetPasswordEmail = async (to, token) => {
-  const resetLink = `http://localhost:3000/reset-password.html?token=${token}`;
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+  const resetLink = `${baseUrl}/reset-password.html?token=${token}`;
   await transporter.sendMail({
     from: `"BotWii 👋" <${process.env.EMAIL_USER}>`,
     to,
