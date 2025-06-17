@@ -17,3 +17,15 @@ Fallos y mejoras
 se tiene presente una falla en la cual si el usuario cierra la pestaña 
 no lo reenvia a la pagina gracias.html hasta que recargue la pagina.
 
+local host
+host=localhost
+database=
+user=root
+port=
+password=
+
+EMAIL_USER=
+EMAIL_PASS=
+NODE_ENV=
+
+SESSION_SECRET =
