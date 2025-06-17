@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 
 export const sendVerificationEmail = async (to, token) => {
   const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-  const verificationLink = `${baseUrl}}/confiEmail.html?token=${token}`;
+  const verificationLink = `${baseUrl}/confiEmail.html?token=${token}`;
 
   await transporter.sendMail({
     from: `"BotWii 👋" <${process.env.EMAIL_USER}>`,
