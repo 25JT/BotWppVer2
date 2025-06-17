@@ -24,6 +24,9 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Enriqueta:wght@400;500;600;700&family=Fascinate+Inline&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap"
         rel="stylesheet">
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css" />
 </head>
 
 <body>
@@ -52,7 +55,8 @@
 
                     <!-- Contacto e Inicio sesión -->
                     <div class="col-12 col-md-4 text-center text-md-end">
-                        <h2 class="d-block d-md-inline me-md-2 mb-2 mb-md-0 textnav " onclick="abrirModalContacto()">Contacto</h2>
+                        <h2 class="d-block d-md-inline me-md-2 mb-2 mb-md-0 textnav  paso4" onclick="abrirModalContacto()">
+                            Contacto</h2>
 
                         <a onclick="cerrarSesion()" style=" cursor: pointer;  color: black;" class="cerrarSesion">
                             <h2 class="d-block d-md-inline textnav">Cerrar sesión</h2>
@@ -74,14 +78,16 @@
                     <h3 class="mb-3">TELEFONOS</h3>
                     <!-- o más, si lo necesitas -->
                     <p id="contador2">0 / 1000</p>
-                    <textarea id="numeros" class="p-4 mb-5 bg-white rounded shadow telefonos" style="width: 100%;"
-                        placeholder="Escribe hasta 100 números separados por coma Ejemplo 30123456789,3123456789,..." maxlength="1000"></textarea>
+                    <textarea id="numeros" class="p-4 mb-5 bg-white rounded shadow telefonos paso1" style="width: 100%;"
+                        placeholder="Escribe hasta 100 números separados por coma Ejemplo 30123456789,3123456789,..."
+                        maxlength="1000"></textarea>
 
                     <!-- Sección Mensajes -->
                     <h3 class="mb-3">MENSAJES</h3>
                     <!-- o más, si lo necesitas -->
                     <p id="contador">0 / 1000</p>
-                    <textarea id="mensaje" placeholder="Escribe aqui tu mensaje" class="p-4 bg-white rounded shadow mensajes"
+                    <textarea id="mensaje" placeholder="Escribe aqui tu mensaje"
+                        class="p-4 bg-white rounded shadow mensajes paso2"
                         style="width: 100%; white-space: pre-wrap; overflow: hidden; resize: none;"
                         maxlength="1000"></textarea>
 
@@ -89,15 +95,28 @@
                     <br>
 
 
-                    <button style="box-shadow: none; " class="rounded shadow" onclick="enviarTN()">ENVIAR</button>
-                    <button style="box-shadow: none; " class="btnvolver  rounded shadow">volver</button>
+                    <button style="box-shadow: none; " class="rounded shadow paso3" onclick="enviarTN()">ENVIAR</button>
+                    
                     <div style="margin-top: 2%;"></div>
 
                 </div>
             </div>
         </div>
     </section>
-    <div style="margin-block-end: 30%;"></div>
+     <div style="margin-top: 12%;"></div>
+
+  
+       <button 
+  class="btn btn-primary d-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-sm tour-btn"
+  onclick="tour()"
+>
+ <span>👁️ Iniciar Tour</span>
+
+</button>
+
+
+
+    <div style="margin-block-end: 5%;"></div>
 
     <div class="text-center">
         <h1>INSTRUCIONES DE USO</h1>
@@ -106,7 +125,8 @@
     <section>
         <div style="text-align: justify; margin: 4%;">
             <h3 class="text-lg leading-relaxed final-text3">
-                Nuestro bot envía mensajes a cualquier número registrado en WhatsApp. Utiliza un temporizador para realizar
+                Nuestro bot envía mensajes a cualquier número registrado en WhatsApp. Utiliza un temporizador para
+                realizar
                 los envíos, el cual puede variar entre <strong>5 segundos</strong> y un máximo de <strong>10
                     minutos</strong>.
                 <br><br>
@@ -117,34 +137,37 @@
                     números</strong>. Este límite podrá ampliarse en futuras versiones. Actualmente, solo se permite el
                 envío de texto en esta primera versión de lanzamiento.
             </h3>
-    
+
             <br>
-    
+
             <h3 class="text-lg leading-relaxed final-text4">
-                Le solicitamos que <strong>cree una cuenta</strong> para poder hacer seguimiento en caso de fallos usando su
+                Le solicitamos que <strong>cree una cuenta</strong> para poder hacer seguimiento en caso de fallos
+                usando su
                 ID de usuario y poder reiniciar su sesión si es necesario.
                 <br><br>
                 <strong>Si no crea una cuenta, no podrá usar la aplicación.</strong>
                 <br><br>
                 Una vez tenga una cuenta, pasará a la sección de envío de mensajes, donde podrá enviar mensajes a sus
-                contactos de WhatsApp. Puede usar todas las formas de comunicación que ofrece WhatsApp, como texto, emojis,
+                contactos de WhatsApp. Puede usar todas las formas de comunicación que ofrece WhatsApp, como texto,
+                emojis,
                 etc.
                 <br><br>
                 El bot también incluye una serie de <strong>mensajes predefinidos</strong>, como saludos y despedidas.
                 Además, se utilizan sinónimos para evitar que los mensajes se vean repetitivos o iguales.
             </h3>
-    
+
             <br>
-    
+
             <h3 class="text-lg leading-relaxed final-text5">
-                Una vez presione el botón <strong>Enviar</strong>, el bot le mostrará un <strong>código QR</strong> que debe
+                Una vez presione el botón <strong>Enviar</strong>, el bot le mostrará un <strong>código QR</strong> que
+                debe
                 escanear desde su WhatsApp, usando la opción de <em>Vincular dispositivo</em>.
                 <br><br>
                 Si no sabe cómo hacerlo, a continuación le explicamos:
             </h3>
-    
+
             <br>
-    
+
             <div class="row justify-content-center final-text6 text-center">
                 <h3 class="text-lg leading-relaxed mb-3"><strong>¿Cómo vincular su dispositivo?</strong></h3>
                 <div class="col-auto">
@@ -152,86 +175,90 @@
                         style="border-radius: 20px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); max-width: 100%; height: auto;">
                 </div>
             </div>
-    
+
             <br>
-    
+
             <h3 class="text-lg leading-relaxed final-text7">
-                ¡Y listo! Los mensajes comenzarán a enviarse. Le solicitamos que <strong>no cierre la ventana</strong> del
+                ¡Y listo! Los mensajes comenzarán a enviarse. Le solicitamos que <strong>no cierre la ventana</strong>
+                del
                 bot mientras se realiza el envío, ya que, si lo hace, el proceso se interrumpirá y tendrá que volver a
                 iniciar sesión.
                 <br><br>
-                Mientras se envían los mensajes, el bot mostrará un <strong>contador</strong> que indica cuándo se tomará
+                Mientras se envían los mensajes, el bot mostrará un <strong>contador</strong> que indica cuándo se
+                tomará
                 una pausa. Cuando el contador llegue a 0, el bot continuará con el envío.
             </h3>
-    
+
             <br>
-    
+
             <h3 class="text-lg leading-relaxed final-text8">
-                Una vez finalice el envío, será redirigido a una página con un <strong>resumen de los mensajes enviados y
-                    los que fallaron</strong>.
+                Una vez finalice el envío, será redirigido a una página con un <strong>resumen de los mensajes enviados
+                    y
+                    los que fallaron</strong> tambien le enviara un mensaje a si mismo con el resumen.
             </h3>
-    
+
             <br>
-    
+
             <h3 class="text-lg leading-relaxed final-text9">
                 <strong>Recuerde:</strong> La finalidad de este bot es enviar mensajes a los contactos que ya tiene
                 guardados en su WhatsApp.
                 <br><br>
-                Si usted decide enviar mensajes a números que no tiene en su lista de contactos, corre el riesgo de que su
+                Si usted decide enviar mensajes a números que no tiene en su lista de contactos, nosotros no nos hacemos
+                responsalbes y corre el riesgo de que su
                 cuenta sea penalizada por WhatsApp.
             </h3>
-    
+
         </div>
     </section>
 
     <!-- Modal de contacto -->
-<div id="modalContacto" class="modal-overlay hidden">
-  <div class="modal-box">
-    <button onclick="cerrarModalContacto()" class="close-button" style="box-shadow: none;">&times;</button>
-    <h2>Contacto</h2>
-    <form id="formContacto">
-      <div class="form-group">
-        <label for="nombreContacto">Nombre</label>
-        <input type="text" id="nombreContacto" required>
-      </div>
-      <div class="form-group">
-        <label for="emailContacto">Correo</label>
-        <input type="email" id="emailContacto" required>
-      </div>
-      <div class="form-group">
-        <label for="mensajeContacto">Mensaje</label>
-        <textarea id="mensajeContacto" rows="4" required></textarea>
-      </div>
-      <button type="submit" class="btn btn-primary" style="box-shadow: none;">Enviar</button>
-    </form>
-  </div>
-</div>
-
-
-
-<footer class="container-fluid  py-4 anifooter">
-  <div class="container text-center text-lg-start">
-    <div class="row align-items-center justify-content-center">
-
-      <!-- Columna 1: BOTWII -->
-      <div class="col-12 col-md-4 mb-4 mb-md-0">
-        <h1 class="text-center text-md-start">BOTWII</h1>
-      </div>
-
-      <!-- Columna 2: Logo -->
-      <div class="col-12 col-md-4 mb-4 mb-md-0 text-center">
-        <img src="Img/Logo/Logo.png" alt="Logo" class="img-fluid" style="max-height: 150px;">
-      </div>
-
-      <!-- Columna 3: Contacto -->
-      <div class="col-12 col-md-4 text-center text-md-end">
-        <h1>CONTACTO</h1>
-        <p class="mb-0">botwiioficial@gmail.com</p>
-      </div>
-
+    <div id="modalContacto" class="modal-overlay hidden">
+        <div class="modal-box">
+            <button onclick="cerrarModalContacto()" class="close-button" style="box-shadow: none;">&times;</button>
+            <h2>Contacto</h2>
+            <form id="formContacto">
+                <div class="form-group">
+                    <label for="nombreContacto">Nombre</label>
+                    <input type="text" id="nombreContacto" required>
+                </div>
+                <div class="form-group">
+                    <label for="emailContacto">Correo</label>
+                    <input type="email" id="emailContacto" required>
+                </div>
+                <div class="form-group">
+                    <label for="mensajeContacto">Mensaje</label>
+                    <textarea id="mensajeContacto" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="box-shadow: none;">Enviar</button>
+            </form>
+        </div>
     </div>
-  </div>
-</footer>
+
+
+
+    <footer class="container-fluid  py-4 anifooter">
+        <div class="container text-center text-lg-start">
+            <div class="row align-items-center justify-content-center">
+
+                <!-- Columna 1: BOTWII -->
+                <div class="col-12 col-md-4 mb-4 mb-md-0">
+                    <h1 class="text-center text-md-start">BOTWII</h1>
+                </div>
+
+                <!-- Columna 2: Logo -->
+                <div class="col-12 col-md-4 mb-4 mb-md-0 text-center">
+                    <img src="Img/Logo/Logo.png" alt="Logo" class="img-fluid" style="max-height: 150px;">
+                </div>
+
+                <!-- Columna 3: Contacto -->
+                <div class="col-12 col-md-4 text-center text-md-end">
+                    <h1>CONTACTO</h1>
+                    <p class="mb-0">botwiioficial@gmail.com</p>
+                </div>
+
+            </div>
+        </div>
+    </footer>
 
 
 
@@ -243,6 +270,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 <script src="https://unpkg.com/split-type"></script>
+<script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+   <script defer src="/js/Alertas/alertas.js"></script>
+<script src="/js/tour/tour.js" defer></script>
 <script src="/js/animacionesjs/aniPagPrincipal.js" defer></script>
 <script src="/js/principal.js" defer></script>
 <script src=" /js/indexhtml.js" defer></script>

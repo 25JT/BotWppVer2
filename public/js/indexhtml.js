@@ -1,4 +1,5 @@
 
+
 verificarSesionActiva();
 actualizarBotonesSesion();
 
@@ -30,17 +31,45 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (data.success) {
-          alert("Mensaje enviado correctamente.");
-               document.getElementById("nombreContacto").value = "";
-      document.getElementById("emailContacto").value = "";
-      document.getElementById("mensajeContacto").value = "";
+          alertaBien({
+              texto: "Mensaje enviado correctamente.",
+              callback: function () {
+                  console.log("Se aceptó la alerta");
+              }
+          });
+
+          document.getElementById("nombreContacto").value = "";
+          document.getElementById("emailContacto").value = "";
+          document.getElementById("mensajeContacto").value = "";
           cerrarModalContacto();
         } else {
-          alert("Error al enviar mensaje: " + data.message);
+           alertaError({
+               texto: "Error al enviar mensaje: " + data.message,
+               callback: function () {
+                   console.log("Se aceptó la alerta");
+               }
+           });
         }
       } catch (err) {
-        alert("Error al enviar mensaje.")
-     
+         Swal.fire({
+        title: 'Error',
+        text: "Error al enviar mensaje: " + data.message,
+        icon: 'error',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        showCancelButton: false,
+        allowOutsideClick: false
+    }).then((result) => {
+        if (result.isConfirmed) {
+            if (params.callback) {
+                params.callback();
+            }
+        }
+    });
+
+
+    
         ;
       }
     });
@@ -82,11 +111,24 @@ document.getElementById('loginForm').addEventListener('submit', function (e) {
   const correo = e.target.correo.value;
   const contrasena = e.target.contrasena.value;
   if (correo === "" || contrasena === "") {
-    alert("Por favor, completa todos los campos.");
+    alertaAdvetencia({
+      texto: "Por favor, completa todos los campos.",
+      callback: function () {
+     //   console.log("Se aceptó la alerta");
+      }
+    })
+
+    
     return;
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
-    alert("Por favor, ingresa un correo electrónico válido.");
+ 
+    alertaAdvetencia({
+      texto: "Por favor, ingresa un correo electrónico válido.",
+      callback: function () {
+      //  console.log("Se aceptó la alerta");
+      }
+    });
     return;
   }
 
@@ -131,37 +173,67 @@ async function registrarUsuario() {
 
 
   if (nombre === "" || apellido === "" || email === "" || contrasena === "") {
-    alert("Por favor, completa todos los campos.");
+      alertaAdvetencia({
+      texto: "Por favor, completa todos los campos.",
+      callback: function () {
+      //  console.log("Se aceptó la alerta");
+      }
+    })
     return;
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    alert("Por favor, ingresa un correo electrónico válido.");
+       alertaAdvetencia({
+      texto: "Por favor, ingrese un correo válido.",
+      callback: function () {
+     //   console.log("Se aceptó la alerta");
+      }
+    })
     return;
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailconfirmacion)) {
-    alert("Por favor, ingresa un correo electrónico de confirmación válido.");
+    alertaAdvetencia({
+      texto: "Por favor, ingresa un correo electrónico de confirmación válido.",
+      callback: function () {
+     //   console.log("Se aceptó la alerta");
+      }
+    })
     return;
   }
 
   if (email !== emailconfirmacion) {
-    alert("Los correos electrónicos no coinciden.");
+    alertaAdvetencia({
+      texto: "Los correos electrónicos no coinciden.",
+      callback: function () {
+     //   console.log("Se aceptó la alerta");
+      }
+    })
     return;
   }
   if (contrasena !== contrasenaConfirm) {
-    alert("Las contraseñas no coinciden.");
+    alertaAdvetencia({
+      texto: "Las contraseñas no coinciden.",
+      callback: function () {
+     //   console.log("Se aceptó la alerta");
+      }
+    })
     return;
   }
 
 
   if (contrasena.length < 8) {
-    alert("La contraseña debe tener al menos 8 caracteres.");
+    alertaAdvetencia({
+      texto: "La contraseña debe tener al menos 8 caracteres.",
+      callback: function () {
+     //   console.log("Se aceptó la alerta");
+      }
+    })
     return;
 
   }
 
   
 
-  console.log(email);
+  //console.log(email);
 
 
   try {
@@ -182,15 +254,29 @@ async function registrarUsuario() {
     const data = await response.json();
     if (data.success) {
      // alert("Usuario registrado correctamente");
-     alert("Usuario registrado correctamente. Por favor valida tu correo para inisiar sesion.");
-      window.location.href = "index.html"; // Redirigir a la página de inicio
+     alertaBien({
+       texto: "Usuario registrado correctamente. Por favor valida tu correo para inisiar sesion.",
+       callback: function () {
+         window.location.href = "index.html"; // Redirigir a la página de inicio
+       }
+     });
       return;
     } else {
-      alert("Error al registrar usuario: " + data.message);
+      alertaError({
+        texto: "Error al registrar usuario: " + data.message,
+        callback: function () {
+          console.log("Se aceptó la alerta");
+        }
+      });
     }
   } catch (error) {
-    console.error("Error al registrar usuario:", error);
-    alert("Error al registrar usuario. Por favor, inténtalo de nuevo más tarde.");
+   // console.error("Error al registrar usuario:", error);
+    alertaError({
+      texto: "Error al registrar usuario. Por favor, inténtalo de nuevo más tarde.",
+      callback: function () {
+        console.log("Se aceptó la alerta");
+      }
+    });
   }
 
 }
@@ -202,13 +288,15 @@ async function registrarUsuario() {
 
 
 async function loginUsuario(correo, contrasena) {
-
-
   const sesionActiva = await fetch('/sesion').then(res => res.json());
 
   if (sesionActiva.loggedIn) {
-    alert("Ya tienes una sesión activa. No puedes iniciar sesión de nuevo.");
-    window.location.href = "principal.html"; // Redirigir a la página principal
+    alertaError({
+      texto: "Ya tienes una sesión activa. No puedes iniciar sesión de nuevo.",
+      callback: function () {
+        window.location.href = "principal.html";
+      }
+    });
     return;
   }
 
@@ -226,26 +314,33 @@ async function loginUsuario(correo, contrasena) {
 
     const data = await response.json();
     if (data.success) {
-      //alert("Login exitoso");
-      console.log("Inicio de sesión exitoso:", data);
-
       // Guardar el usuario en la sesión
       sessionStorage.setItem('userId', data.userId);
       sessionStorage.setItem('correo', data.correo);
-      //cambia inicio sesión por cerrar sesión
 
+      // Si es el primer login, guarda la bandera para mostrar el tour
+      if (data.firstLogin) {
+        localStorage.setItem('showTour', '1');
+      }
 
-      //window.location.href = "/main"; // Redirigir a la página principal
-
-      console.log("Inicio de sesión exitoso:", data);
       // Redirigir a la página principal
       window.location.href = "principal.html";
     } else {
-      alert("Error al iniciar sesión: " + data.message);
+      alertaError({
+        texto: "Error al iniciar sesión: Por favor, verifica tus credenciales. Si no tienes cuenta, puedes crear una.",
+        callback: function () {
+        //  console.log("Se aceptó la alerta");
+        }
+      });
     }
   } catch (error) {
-    console.error("Error al iniciar sesión:", error);
-    alert("Error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.");
+   // console.error("Error al iniciar sesión:", error);
+    alertaError({
+      texto: "Error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.",
+      callback: function () {
+        console.log("Se aceptó la alerta");
+      }
+    });
   }
 }
 
@@ -258,18 +353,67 @@ async function cerrarSesion() {
 
     const data = await response.json();
     if (data.success) {
-      alert("Sesión cerrada correctamente");
-      // Redirigir a la página de inicio
-      window.location.href = "/";
+      alertaBien({
+        texto: "Sesión cerrada correctamente",
+        callback: function () {
+          // Redirigir a la página de inicio
+          window.location.href = "/";
+        }
+      });
     } else {
-      alert("Error al cerrar sesión: " + data.message);
+      //alert("Error al cerrar sesión: " + data.message);
     }
   } catch (error) {
-    console.error("Error al cerrar sesión:", error);
-    alert("Error al cerrar sesión. Por favor, inténtalo de nuevo más tarde.");
+    //console.error("Error al cerrar sesión:", error);
+    alertaError({
+      texto: "Error al cerrar sesión. Por favor, inténtalo de nuevo más tarde.",
+      callback: function () {
+      //  console.log("Se aceptó la alerta");
+      }
+    });
   }
 }
 
+// Suponiendo que tienes un formulario con id="formLogin"
+document.getElementById('formLogin').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const correo = document.getElementById('correo').value;
+  const contrasena = document.getElementById('contrasena').value;
+
+  try {
+    const res = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ correo, contrasena })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      // Si es el primer login, guarda la bandera para mostrar el tour
+      if (data.firstLogin) {
+        localStorage.setItem('showTour', '1');
+      }
+      // Redirige a principal.html
+      window.location.href = '/principal.html';
+    } else {
+      // Muestra mensaje de error (ajusta según tu UI)
+      alertaError({
+        texto: data.message || 'Error al iniciar sesión',
+        callback: function () {
+          console.log("Se aceptó la alerta");
+        }
+      });
+    }
+  } catch (err) {
+    alertaError({
+      texto: 'Error de conexión con el servidor',
+      callback: function () {
+        console.log("Se aceptó la alerta");
+      }
+    });
+  }
+});
 
 // Verificar sesión al cargar main.html
 async function verificarSesionActiva() {
@@ -279,7 +423,7 @@ async function verificarSesionActiva() {
     console.log ("Usuario no autenticado");
 
   } else {
-    console.log("Usuario activo:", data.userId);
+ //   console.log("Usuario activo:", data.userId);
     sessionStorage.setItem('userId', data.userId);
     sessionStorage.setItem('correo', data.correo);
 
@@ -349,14 +493,22 @@ function cerrarRecuperarContrasena() {
 
       const data = await response.json();
       if (data.success) {
-        alert("Revisa tu correo para continuar el proceso.");
+       alertaBien({
+          texto: "Se ha enviado un enlace de recuperación a tu correo.",
+          callback: function () {
+            cerrarRecuperarContrasena();
+          }
+        });
         cerrarRecuperarContrasena();
       } else {
         alert(data.message);
       }
     } catch (error) {
-      alert("Error al enviar solicitud.");
-      console.error(error);
+      alertaError({
+        texto: "Error al enviar solicitud.",
+        callback: function () {
+          console.error(error);
+        }
+      });
     }
   });
-  

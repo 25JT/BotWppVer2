@@ -2,11 +2,22 @@
 <html lang="es">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>BotWii</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>BotWii - ENVIO DE MENSAJES GRATIS</title>
 
     <link rel="stylesheet" href="/Css/main.css">
+
+    <!-- Idioma -->
+    <meta name="language" content="es">
+
+    <!-- Autor y derechos -->
+    <meta name="author" content="JRDEV25">
+    <meta name="copyright" content="© 2025 BOTWII">
+
+
 
     <!-- FAVIICON -->
     <link rel="icon" type="image/png" href="Img/favicon/favicon-96x96.png" sizes="96x96" />
@@ -26,9 +37,43 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Enriqueta:wght@400;500;600;700&family=Fascinate+Inline&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap"
         rel="stylesheet">
+
+    <!--ETIQUETAS-->
+    <!-- Meta SEO básica -->
+    <meta name="title" content="BOTWII - Automatiza la difusión masiva de mensajes">
+    <meta name="description"
+        content="BOTWII permite enviar mensajes masivos de forma rápida, segura y eficiente. Conecta con tus clientes potenciales y optimiza tus campañas.">
+
+    <!-- Indexación -->
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow">
+
+    <meta name="description"
+        content="BOTWII permite la difusión masiva de mensajes de forma rápida, segura y eficiente. Automatiza la comunicación con clientes potenciales y optimiza el alcance de tus campañas.">
+    <meta name="keywords"
+        content="BOTWII, mensajes masivos, automatización, campañas de marketing, clientes potenciales, difusión segura, comunicación eficiente, envair , mensajes, enviar mensajes gratis">
+
+
+    <!--EN WEB-->
+    <meta property="og:title" content="BOTWII - Automatiza la difusión masiva de mensajes">
+    <meta property="og:description"
+        content="Difunde mensajes de forma rápida y segura. Conecta con tus clientes potenciales sin complicaciones.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tusitio.com">
+    <meta property="og:image" content="https://tusitio.com/img/botwii-banner.jpg">
+
+    <!--EN X-->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="BOTWII - Automatiza la comunicación con tus clientes">
+    <meta name="twitter:description"
+        content="Envía mensajes masivos con seguridad y eficiencia. Optimiza tus campañas de forma inteligente.">
+    <meta name="twitter:image" content="https://tusitio.com/img/botwii-banner.jpg">
+
+
 </head>
 
 <body>
+    <h1 style="display: none;">BOTWII: ENVIO DE MENSAJES RAPIDO, FACIL Y GRATIS</h1>
 
 
 
@@ -57,8 +102,9 @@
 
                     <!-- Contacto e Inicio sesión -->
                     <div class="col-12 col-md-4 text-center text-md-end">
-                        
-                        <h2 class="d-block d-md-inline me-md-2 mb-2 mb-md-0 textnav " onclick="abrirModalContacto()">Contacto</h2>
+
+                        <h2 class="d-block d-md-inline me-md-2 mb-2 mb-md-0 textnav " onclick="abrirModalContacto()">
+                            Contacto</h2>
 
                         <a onclick="toggleModal()" style=" cursor: pointer; color: black;" class="iniciarSesion">
                             <h2 class="d-block d-md-inline textnav">Inicio sesión</h2>
@@ -228,6 +274,7 @@
 
     </section>
     <div style="margin-top: 5%;"></div>
+
 
     <!-- MAS INFORMACION -->
     <section>
@@ -426,10 +473,12 @@
 
             </div>
             <form id="formRecuperar">
-                <input type="email" id="correoRecuperar" name="correo" placeholder="Ingresa tu correo" class="input-recuperar" required>
+                <input type="email" id="correoRecuperar" name="correo" placeholder="Ingresa tu correo"
+                    class="input-recuperar" required>
 
                 <div class="conbtn">
-                    <button type="button" onclick="cerrarRecuperarContrasena()" class="btn-enviar-recuperar">Cerrar</button>
+                    <button type="button" onclick="cerrarRecuperarContrasena()"
+                        class="btn-enviar-recuperar">Cerrar</button>
 
                     <button type="submit" class="btn-enviar-recuperar">Enviar</button>
                 </div>
@@ -439,27 +488,27 @@
     </div>
 
     <!-- Modal de contacto -->
-<div id="modalContacto" class="modal-overlay hidden">
-  <div class="modal-box">
-    <button onclick="cerrarModalContacto()" class="close-button" style="box-shadow: none;">&times;</button>
-    <h2>Contacto</h2>
-    <form id="formContacto">
-      <div class="form-group">
-        <label for="nombreContacto">Nombre</label>
-        <input type="text" id="nombreContacto" required>
-      </div>
-      <div class="form-group">
-        <label for="emailContacto">Correo</label>
-        <input type="email" id="emailContacto" required>
-      </div>
-      <div class="form-group">
-        <label for="mensajeContacto">Mensaje</label>
-        <textarea id="mensajeContacto" rows="4" required></textarea>
-      </div>
-      <button type="submit" class="btn btn-primary" style="box-shadow: none;">Enviar</button>
-    </form>
-  </div>
-</div>
+    <div id="modalContacto" class="modal-overlay hidden">
+        <div class="modal-box">
+            <button onclick="cerrarModalContacto()" class="close-button" style="box-shadow: none;">&times;</button>
+            <h2>Contacto</h2>
+            <form id="formContacto">
+                <div class="form-group">
+                    <label for="nombreContacto">Nombre</label>
+                    <input type="text" id="nombreContacto" required>
+                </div>
+                <div class="form-group">
+                    <label for="emailContacto">Correo</label>
+                    <input type="email" id="emailContacto" required>
+                </div>
+                <div class="form-group">
+                    <label for="mensajeContacto">Mensaje</label>
+                    <textarea id="mensajeContacto" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="box-shadow: none;">Enviar</button>
+            </form>
+        </div>
+    </div>
 
 
 
@@ -472,10 +521,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@latest/bundled/lenis.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 <script src="https://unpkg.com/split-type"></script>
 <script src="/js/animacionesjs/animacion.js" defer></script>
+<script defer src="/js/Alertas/alertas.js"></script>
 <script src="/js/indexhtml.js" defer></script>
 
 </html>

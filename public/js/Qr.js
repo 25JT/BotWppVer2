@@ -48,15 +48,27 @@ async function cerrarSesion() {
 
     const data = await response.json();
     if (data.success) {
-      alert("Sesión cerrada correctamente");
-      // Redirigir a la página de inicio
-      window.location.href = "/";
+      alertaBien({
+        texto: "Sesión cerrada correctamente",
+        callback: () => {
+          // Redirigir a la página de inicio
+          window.location.href = "/"
+        }
+      })
+      // alert("Sesión cerrada correctamente");
+      // // Redirigir a la página de inicio
+      // window.location.href = "/";
     } else {
-      alert("Error al cerrar sesión: " + data.message);
+      // alert("Error al cerrar sesión: " + data.message);
+      alertaError({
+        texto: "Error al cerrar sesión. Por favor, inténtalo de nuevo más tarde."
+      });
     }
   } catch (error) {
-    console.error("Error al cerrar sesión:", error);
-    alert("Error al cerrar sesión. Por favor, inténtalo de nuevo más tarde.");
+    //  console.error("Error al cerrar sesión:", error);
+    alertaError({
+      texto: "Error al cerrar sesión. Por favor, inténtalo de nuevo más tarde."
+    });
   }
 }
 
@@ -89,7 +101,7 @@ socket.on('pausaIniciada', ({ mensaje, tiempo }) => {
 
   // Limpia cualquier contador anterior
   if (pausaInterval) clearInterval(pausaInterval);
-  
+
 
   let segundosRestantes = tiempo;
   pausaInterval = setInterval(() => {
@@ -129,32 +141,36 @@ async function verificarSesionActiva() {
   const res = await fetch('/sesion');
   const data = await res.json();
   if (!data.loggedIn) {
-    console.log ("Usuario no autenticado");
-    alert("Debes iniciar sesión para enviar datos.");
-    window.location.href = '/index.html';
+    console.log("Usuario no autenticado");
+    alertaError({
+      texto: "Debes iniciar sesión para enviar datos.",
+      callback: () => {
+        window.location.href = '/index.html';
+      }
+    });
   } else {
-    
+
   }
 }
 
 // Manejo de eventos del socket
 socket.on('done', (data) => {
-  console.log('Envío completado', data);
-  
+  //  console.log('Envío completado', data);
+
   // Mostrar datos de resumen
   mostrarResumen(data);
-  
+
   // Plan B: Redirigir después de 5 segundos si no llega el evento redirect
   setTimeout(() => {
     if (!window.redirectTriggered) {
-      console.log('Redirección por timeout (plan B)');
+      //   console.log('Redirección por timeout (plan B)');
       window.location.href = '/gracias.html';
     }
   }, 5000);
 });
 
 socket.on('redirect', (url) => {
-  console.log('Redireccionando a:', url);
+  // console.log('Redireccionando a:', url);
   window.redirectTriggered = true;
   window.location.href = url;
 });
@@ -163,40 +179,40 @@ socket.on('redirect', (url) => {
 function setupSocketReconnection() {
   let reconnectAttempts = 0;
   const maxReconnectAttempts = 5;
-  
+
   function connect() {
     const socket = io({
       reconnectionAttempts: maxReconnectAttempts,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000
     });
-    
+
     socket.on('connect', () => {
       reconnectAttempts = 0;
-      console.log('Socket conectado');
-      
+      //   console.log('Socket conectado');
+
       // Verificar estado de envío al reconectar
       socket.emit('check-status');
     });
-    
+
     socket.on('reconnect_failed', () => {
-      console.error('No se pudo reconectar el socket');
+      //  console.error('No se pudo reconectar el socket');
     });
-    
+
     return socket;
   }
-  
+
   let socket = connect();
-  
+
   // Reconexión automática si se pierde la conexión
   setInterval(() => {
     if (!socket.connected && reconnectAttempts < maxReconnectAttempts) {
       reconnectAttempts++;
-      console.log(`Intentando reconexión (${reconnectAttempts}/${maxReconnectAttempts})`);
+      //   console.log(`Intentando reconexión (${reconnectAttempts}/${maxReconnectAttempts})`);
       socket = connect();
     }
   }, 3000);
-  
+
   return socket;
 }
 
@@ -207,8 +223,12 @@ function setupSocketReconnection() {
 socket.emit('check-status');
 
 socket.on('envio-cancelado', () => {
-  alert('El envío ha sido cancelado.');
-  window.location.href = '/principal.html';
+  alertaError({
+    texto: 'El envío ha sido cancelado.',
+    callback: () => {
+      window.location.href = '/principal.html';
+    }
+  });
 });
 
 // window.addEventListener('beforeunload', (e) => {

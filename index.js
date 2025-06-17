@@ -7,7 +7,7 @@ import {
   DisconnectReason,
   fetchLatestBaileysVersion
 } from 'baileys';
-import nodemailer from 'nodemailer'; 
+import nodemailer from 'nodemailer';
 import qrcode from 'qrcode';
 import { Boom } from '@hapi/boom';
 import fs from 'fs/promises';
@@ -21,11 +21,13 @@ import cookieParser from 'cookie-parser';
 import { v4 as uuidv4 } from 'uuid';
 import { sendVerificationEmail } from './public/js/confiEmail.js'; // Ajusta la ruta si es necesario
 import { sendResetPasswordEmail } from './public/js/combCont.js'; // Ajusta la ruta si es necesario
+import dotenv from 'dotenv';
 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -37,10 +39,14 @@ app.use(express.json());
 
 // Middleware de sesión
 const sessionMiddleware = session({
-  secret: 'mi-secreto',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false }
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Solo true en producción con HTTPS
+    httpOnly: true,
+    sameSite: 'lax'
+  }
 });
 
 app.use(cookieParser());
@@ -118,7 +124,7 @@ app.post('/registro', async (req, res) => {
       // Genera el UUID para el usuario
       const userId = uuidv4();
       const hashedPassword = await bcrypt.hash(contrasena, 10);
-      const sql = 'INSERT INTO usuario (id, contrasena, correo, nombre, apellidos) VALUES (?, ?, ?, ?, ?)';
+      const sql = 'INSERT INTO usuario (id, contrasena, correo, nombre, apellidos, primer_login) VALUES (?, ?, ?, ?, ?, 0)';
       conexion.query(sql, [userId, hashedPassword, email, nombre, apellido], async (error, results) => {
         if (error) {
           console.error('Error al registrar usuario:', error);
@@ -216,7 +222,6 @@ app.post("/login", (req, res) => {
 
     const usuario = results[0];
 
-    // NUEVO: Verifica si el usuario está verificado
     if (!usuario.verificado) {
       return res.status(403).json({ success: false, message: "Debes verificar tu correo antes de iniciar sesión." });
     }
@@ -229,7 +234,19 @@ app.post("/login", (req, res) => {
     req.session.userId = usuario.id;
     req.session.usuario = usuario;
 
-    res.status(200).json({ success: true, message: "Inicio de sesión exitoso", userId: usuario.id, correo: usuario.correo });
+    // NUEVO: Verifica si es el primer login
+    const esPrimerLogin = usuario.primer_login === 0;
+    if (esPrimerLogin) {
+      // Actualiza el campo para que no vuelva a ser primer login
+      conexion.query("UPDATE usuario SET primer_login = 1 WHERE id = ?", [usuario.id]);
+    }
+    res.status(200).json({
+      success: true,
+      message: "Inicio de sesión exitoso",
+      userId: usuario.id,
+      correo: usuario.correo,
+      firstLogin: esPrimerLogin // <--- NUEVO
+    });
   });
 });
 
@@ -371,7 +388,7 @@ app.post('/contacto', async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.log(err);
-    
+
     res.json({ success: false, message: "No se pudo enviar el mensaje." });
   }
 });
@@ -577,20 +594,22 @@ io.on('connection', async (socket) => {
 
     const delayAleatorio = () => delay(Math.floor(Math.random() * (10000 - 6000 + 1)) + 4000);
 
-    const saludos = [
-      "Hola 👋", "¡Saludos!", "Buenas, ¿cómo estás?", "Un gusto saludarte", "Hola, ¿cómo te va?",
-      "¡Qué tal!", "Muy buenas 🌞", "¡Buen día!", "Saludos cordiales 👋", "Hola, espero que estés bien",
-      "¡Hola! Te quiero compartir algo interesante", "Hola 👋 ¿cómo va todo?",
-      "¡Hola! Espero que tengas un gran día", "¡Hey! ¿Cómo andas?", "Hola, ¡bienvenido!",
-      "Hola, quería contarte algo 🤗",
-    ];
+    const saludos = ["Hola 👋", "¡Saludos!", "Buenas, ¿cómo estás?", "Un gusto saludarte", "Hola, ¿cómo te va?", "¡Qué tal!", "Muy buenas 🌞", "¡Buen día!", "Saludos cordiales 👋",
+      "Hola, espero que estés bien", "¡Hola! Te quiero compartir algo interesante", "Hola 👋 ¿cómo va todo?", "¡Hola! Espero que tengas un gran día", "¡Hey! ¿Cómo andas?", "Hola, ¡bienvenido!",
+      "Hola, quería contarte algo 🤗", "¡Hola, hola! 😄", "¿Cómo va todo por allá?", "¡Qué gusto saludarte nuevamente!", "Espero que tu día esté yendo genial", "¡Muy buenas tardes/noches/días!",
+      "¡Hola desde este lado de la pantalla!", "¡Qué alegría conectar contigo!", "¡Hola, espero que estés teniendo un excelente día!", "Te saludo con mucho entusiasmo ✨",
+      "Hola, gracias por tu tiempo", "¡Encantado de saludarte!", "Espero que todo marche bien contigo", "Un saludo cordial y afectuoso", "¡Hola! Espero que estés disfrutando tu jornada",
+      "Hola 👋 ¿cómo va tu semana?", "Te saludo con mucho gusto", "Hola, me alegra poder escribirte", "¡Buenas! 😊", "¡Hola, gracias por estar aquí!", "Hola, te comparto esta info con cariño",
+      "¡Hola! ¿Listo para algo interesante?", "¡Un placer contactarte!", "Hola, espero que estés teniendo un día productivo 💼"];
 
-    const firmas = [
-      "Atentamente", "Gracias por tu atención", "Estamos para ayudarte", "Cualquier duda, escríbenos",
-      "Saludos cordiales", "Con gusto te apoyamos", "¡Te esperamos!", "Gracias por tu tiempo 🙌",
-      "Esperamos tu respuesta", "Con aprecio", "Con estima", "Seguimos en contacto",
-      "Gracias por confiar en nosotros", "Aquí estamos para lo que necesites", "¡Éxitos! 💪",
-    ];
+
+    const firmas = ["Atentamente", "Gracias por tu atención", "Estamos para ayudarte", "Cualquier duda, escríbenos", "Saludos cordiales",
+      "Con gusto te apoyamos", "¡Te esperamos!", "Gracias por tu tiempo 🙌", "Esperamos tu respuesta", "Con aprecio", "Con estima", "Seguimos en contacto", "Gracias por confiar en nosotros",
+      "Aquí estamos para lo que necesites", "¡Éxitos! 💪", "Un cordial saludo", "Quedo atento a tus comentarios", "Estamos a tu disposición", "Gracias por preferirnos", "Un fuerte abrazo 🤗",
+      "Que tengas un gran día", "¡Nos leemos pronto!", "Siempre a tu servicio", "Saludos y bendiciones 🙏", "Un placer poder ayudarte", "Gracias por tu confianza", "Con todo respeto y estima",
+      "Nos mantenemos en contacto", "Esperamos noticias tuyas pronto", "Con afecto", "Hasta pronto 👋", "Gracias por ser parte de esta comunidad", "Con entusiasmo", "¡Seguimos adelante!",
+      "Un saludo fraterno"];
+
 
     const sinonimos = {
       "ganar dinero": ["generar ingresos", "obtener ganancias", "tener ingresos extra", "producir dinero", "recibir pagos", "incrementar tus finanzas"],
@@ -609,14 +628,11 @@ io.on('connection', async (socket) => {
 
     function maquillarMensajeLibre(texto) {
       const extras = [
-        "Si tienes dudas, estoy por aquí 👀",
-        "Te puedo ayudar cuando quieras ✌️",
-        "Sin compromiso, solo quiero compartirlo contigo 😊",
-        "Esta info puede ser útil para ti 😉",
-        "Es solo una idea, tú decides 💭",
-        "Avísame si te interesa.",
-        "¡Gracias por tu tiempo!",
-        "Quedo atento a tus comentarios.",
+        "Si tienes dudas, estoy por aquí 👀", "Te puedo ayudar cuando quieras ✌️","Sin compromiso, solo quiero compartirlo contigo 😊","Esta info puede ser útil para ti 😉",
+        "Es solo una idea, tú decides 💭","Avísame si te interesa.","¡Gracias por tu tiempo!","Quedo atento a tus comentarios.","Estoy disponible si necesitas más detalles 📝",
+        "Solo quería que lo supieras 😊","No dudes en escribirme si algo no queda claro 💬","Esto podría hacerte la vida más fácil 🚀","Si quieres, lo revisamos juntos 🤝",
+        "Solo toma un momento, pero puede valer la pena ⏳","Estoy aquí para apoyarte cuando lo necesites 🙌", "Tómalo como un aporte, sin presión ✌️","Gracias por leer hasta aquí 📖",
+        "Espero que te sirva de algo 💡","Cuenta conmigo si necesitas ayuda extra 🤗","No hay prisa, cuando tengas un espacio lo revisas 📬",
       ];
 
       const signosFinales = ['!', '!!', '.', '...'];
@@ -823,7 +839,6 @@ app.post('/cancelar-envio', (req, res) => {
   }
   res.json({ ok: true });
 });
-
 
 
 const PORT = 3000;

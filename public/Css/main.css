@@ -2,6 +2,12 @@ html {
   scroll-behavior: auto !important;
 }
 
+.tour-btn:hover {
+  background-color: #0056b3;
+  transform: scale(1.02);
+  transition: 0.2s ease;
+}
+
 .raleway {
   font-family: "Raleway", sans-serif;
   font-optical-sizing: auto;

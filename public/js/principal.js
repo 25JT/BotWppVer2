@@ -1,11 +1,10 @@
-
 verificarSesionActiva();
 verificarEnvioActivo();
 
 
 
 const usuarioId = sessionStorage.getItem('usuarioId');
-console.log("Usuario ID desde sessionStorage:", usuarioId);
+//console.log("Usuario ID desde sessionStorage:", usuarioId);
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -26,7 +25,14 @@ document.addEventListener("DOMContentLoaded", () => {
   contador.textContent = `${currentLength} / 1000`;
 
   if (currentLength === textarea.maxLength) {
-    alert('Has alcanzado el límite máximo de 1000 caracteres.');
+    alertaError({
+      texto: 'Has alcanzado el límite máximo de 1000 caracteres.',
+      callback: () => {
+        textarea.value = textarea.value.slice(0, 1000); // Limita a 1000 caracteres
+        contador.textContent = '1000 / 1000'; // Actualiza el contador
+      }
+    });
+    //alert('Has alcanzado el límite máximo de 1000 caracteres.');
   }
   });
 
@@ -38,7 +44,13 @@ textarea2.addEventListener('input', () => {
   const currentLength = textarea2.value.length;
   contador2.textContent = `${currentLength} / 1000`;
  if (currentLength === textarea.maxLength) {
-    alert('Has alcanzado el límite máximo de 1000 caracteres.');
+        alertaError({
+      texto: 'Has alcanzado el límite máximo de 1000 caracteres.',
+      callback: () => {
+        textarea.value = textarea.value.slice(0, 1000); // Limita a 1000 caracteres
+        contador.textContent = '1000 / 1000'; // Actualiza el contador
+      }
+    });
   }
 
   numeros = numeros
@@ -47,9 +59,13 @@ textarea2.addEventListener('input', () => {
     .filter(n => n !== '');
 
   if (numeros.length > 100) {
-    alert('Solo puedes ingresar hasta 100 números');
-    // Limita al primeros 100 y actualiza el contenido
-    textarea2.value = numeros.slice(0, 100).join('\n');
+    alertaError({
+      texto: 'Solo puedes ingresar hasta 100 números',
+      callback: () => {
+        // Limita al primeros 100 y actualiza el contenido
+        textarea2.value = numeros.slice(0, 100).join('\n');
+      }
+    });
   }
 });
 
@@ -92,13 +108,24 @@ function enviarTN() {
 
 async function validar(numeros, mensaje) {
   if (numeros.length === 0 || mensaje.trim() === '') {
-    alert('Ingresa los números o el mensaje');
+    alertaAdvetencia ({
+      texto: 'Ingresa los números o el mensaje',
+      callback: () => {
+        // Aquí puedes definir la acción a realizar al aceptar la alerta
+      }
+    });
     return;
   }
   const sesionActiva = await fetch('/sesion').then(res => res.json());
   if (sesionActiva.loggedOut) {
-    alert("Debes iniciar sesión para enviar datos.");
-    window.location.href = '/index.html';
+    alertaAdvetencia({
+      texto: "Debes iniciar sesión para enviar datos.",
+      callback: () => {
+        window.location.href = '/index.html';
+      }
+    })
+    // alert("Debes iniciar sesión para enviar datos.");
+    // window.location.href = '/index.html';
     return;
   }
 
@@ -124,10 +151,17 @@ async function verificarSesionActiva() {
   const data = await res.json();
   if (!data.loggedIn) {
     console.log ("Usuario no autenticado");
-    alert("Debes iniciar sesión para enviar datos.");
-    window.location.href = '/index.html';
+
+       alertaAdvetencia({
+      texto: "Debes iniciar sesión para enviar datos.",
+      callback: () => {
+        window.location.href = '/index.html';
+      }
+    })
+    // alert("Debes iniciar sesión para enviar datos.");
+    // window.location.href = '/index.html';
   } else {
-    console.log("Usuario activo: ACTIVO");
+   // console.log("Usuario activo: ACTIVO");
   }
 }
 
@@ -139,6 +173,16 @@ async function verificarEnvioActivo() {
     window.location.href = '/index2.html';
   }
 }
+
+// Mostrar el tour automáticamente si es el primer login
+window.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('showTour') === '1') {
+    setTimeout(() => {
+      if (typeof tour === 'function') tour();
+      localStorage.removeItem('showTour');
+    }, 800); // Espera a que cargue todo
+  }
+});
 
 
 
