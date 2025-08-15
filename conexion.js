@@ -10,7 +10,10 @@ const conexion = mysql.createConnection({
     database: process.env.database,
     user: process.env.user,
     port: process.env.port,
-    password: process.env.password
+    password: process.env.password,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
 export default conexion;
