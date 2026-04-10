@@ -15,6 +15,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import session from 'express-session';
+import MySQLStoreFactory from 'express-mysql-session';
 import conexion from './conexion.js';
 import bcrypt from 'bcrypt';
 import cookieParser from 'cookie-parser';
@@ -37,20 +38,25 @@ const io = new Server(server);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Confianza en el proxy (necesario para cookies seguras en Render/Heroku)
+// Confianza en el proxy (necesario para cookies seguras en Render/Heroku/Vercel)
 app.set('trust proxy', 1);
+
+// Almacén de sesiones en la base de datos
+const MySQLStore = MySQLStoreFactory(session);
+const sessionStore = new MySQLStore({}, conexion);
 
 // Middleware de sesión
 const sessionMiddleware = session({
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'mi-secreto',
   resave: false,
-  saveUninitialized: false, // Mejor false para evitar crear sesiones vacías
+  saveUninitialized: false, 
   proxy: true,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Solo true en producción con HTTPS
+    secure: process.env.NODE_ENV === 'production', 
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' permite cross-site cookies si secure es true
-    maxAge: 24 * 60 * 60 * 1000 // 24 horas
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días para que persista más tiempo
   }
 });
 
