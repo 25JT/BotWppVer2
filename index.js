@@ -37,15 +37,20 @@ const io = new Server(server);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+// Confianza en el proxy (necesario para cookies seguras en Render/Heroku)
+app.set('trust proxy', 1);
+
 // Middleware de sesión
 const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'mi-secreto',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false, // Mejor false para evitar crear sesiones vacías
+  proxy: true,
   cookie: {
     secure: process.env.NODE_ENV === 'production', // Solo true en producción con HTTPS
     httpOnly: true,
-    sameSite: 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' permite cross-site cookies si secure es true
+    maxAge: 24 * 60 * 60 * 1000 // 24 horas
   }
 });
 
@@ -60,13 +65,7 @@ io.use((socket, next) => {
 
 
 
-//datos de sesion guardados
-app.use(session({
-  secret: 'mi-secreto',   // Un secreto único para firmar la sesión
-  resave: false,          // No guardar la sesión si no ha habido cambios
-  saveUninitialized: true, // Guardar sesiones que aún no han sido inicializadas
-  cookie: { secure: false } // Si estás en desarrollo, setea esto como false
-}));
+// app.use(session({ ... })); // ELIMINADO: Duplicado innecesario
 
 
 
