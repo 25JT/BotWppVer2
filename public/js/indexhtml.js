@@ -106,9 +106,7 @@ function toggleModal() {
 }
 
 
-const loginForm = document.getElementById('loginForm');
-if (loginForm) {
-  loginForm.addEventListener('submit', function (e) {
+document.getElementById('loginForm').addEventListener('submit', function (e) {
   e.preventDefault();
   const correo = e.target.correo.value;
   const contrasena = e.target.contrasena.value;
@@ -136,8 +134,7 @@ if (loginForm) {
 
   loginUsuario(correo, contrasena);
   toggleModal();
-  });
-}
+});
 
 
 //Evento para el boton de mostrar contraseña
@@ -377,10 +374,8 @@ async function cerrarSesion() {
   }
 }
 
-// Suponiendo que tienes un formulario con id="loginForm"
-const formLogin = document.getElementById('loginForm');
-if (formLogin) {
-  formLogin.addEventListener('submit', async function (e) {
+// Suponiendo que tienes un formulario con id="formLogin"
+document.getElementById('formLogin').addEventListener('submit', async function (e) {
   e.preventDefault();
 
   const correo = document.getElementById('correo').value;
@@ -395,11 +390,14 @@ if (formLogin) {
     const data = await res.json();
 
     if (data.success) {
+      // Si es el primer login, guarda la bandera para mostrar el tour
       if (data.firstLogin) {
         localStorage.setItem('showTour', '1');
       }
+      // Redirige a principal.html
       window.location.href = '/principal.html';
     } else {
+      // Muestra mensaje de error (ajusta según tu UI)
       alertaError({
         texto: data.message || 'Error al iniciar sesión',
         callback: function () {
@@ -415,8 +413,7 @@ if (formLogin) {
       }
     });
   }
-  });
-}
+});
 
 // Verificar sesión al cargar main.html
 async function verificarSesionActiva() {
@@ -444,15 +441,15 @@ async function actualizarBotonesSesion() {
     const data = await res.json();
 
     if (data.loggedIn) {
-      if (iniciarSesion) iniciarSesion.style.display = "none";
-      if (cerrarSesion) cerrarSesion.style.display = "inline-block";
-      if (Inicio) Inicio.style.display = "inline-block";
-      if (creaCuentaAni) creaCuentaAni.style.display = "none";
+      iniciarSesion.style.display = "none";
+      cerrarSesion.style.display = "inline-block";
+      Inicio.style.display = "inline-block";
+      creaCuentaAni.style.display = "none";
     } else {
-      if (iniciarSesion) iniciarSesion.style.display = "inline-block";
-      if (cerrarSesion) cerrarSesion.style.display = "none";
-      if (Inicio) Inicio.style.display = "none";
-      if (creaCuentaAni) creaCuentaAni.style.display = "inline-block";
+      iniciarSesion.style.display = "inline-block";
+      cerrarSesion.style.display = "none";
+      Inicio.style.display = "none";
+      creaCuentaAni.style.display = "inline-block";
     }
   } catch (error) {
     console.error("Error al verificar sesión:", error);
